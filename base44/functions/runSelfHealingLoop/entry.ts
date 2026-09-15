@@ -57,10 +57,37 @@ export default async function (req: Request): Promise<Response> {
     if (triggered) {
       const failedGoals = goals.filter((g: any) => {
         const score = g.audit_result?.score || 0;
-        return score < 100 && g.status !== "optimized" && (g.fix_attempts || 0) < (g.max_fix_attempts || 5);
+        // Skip optimized, blocked (planned/not-implemented), and failed goals —
+        // they cannot be healed and must not re-escalate every cycle.
+        return score < 100
+          && !["optimized", "blocked", "failed"].includes(g.status)
+          && (g.fix_attempts || 0) < (g.max_fix_attempts || 5);
       });
 
+      // ── Circuit breaker + dedup ──
+      // Load existing unresolved flags so we UPDATE instead of creating duplicates,
+      // and STOP re-escalating after MAX_CYCLES (3) unresolved cycles per source.
+      const MAX_CYCLES = 3;
+      const recentFlags = await base44.asServiceRole.entities.HealingFlag.list("-flagged_at", 500);
+      const flagBySource = new Map<string, any>();
+      for (const f of recentFlags) {
+        const st = f.status || "";
+        const unresolved = !["resolved"].includes(st);
+        if (unresolved && f.source_id && !flagBySource.has(f.source_id)) {
+          flagBySource.set(f.source_id, f);
+        }
+      }
+
       for (const goal of failedGoals.slice(0, MAX_GOALS_PER_CYCLE)) {
+        const existing = flagBySource.get(goal.id);
+
+        // Circuit breaker: max 3 cycles per unresolved flag, then STOP —
+        // leave the single escalated flag, never re-create duplicates.
+        if (existing && (existing.retry_count || 0) >= MAX_CYCLES) {
+          flagsEscalated++;
+          continue;
+        }
+
         goalsRetried++;
         try {
           await base44.functions.invoke("runEnhancementCycle", {
@@ -71,36 +98,69 @@ export default async function (req: Request): Promise<Response> {
 
           const updated = await base44.asServiceRole.entities.SystemEnhancement.get(goal.id);
           if ((updated.audit_result?.score || 0) >= 100) {
+            if (existing) {
+              await base44.asServiceRole.entities.HealingFlag.update(existing.id, {
+                status: "resolved",
+                validation_status: "passed",
+                resolved_at: new Date().toISOString(),
+                repair_result: "Goal reached 100/100",
+              });
+            }
             goalsResolved++;
           } else {
+            const errMsg = `Goal "${goal.title}" score stuck at ${updated.audit_result?.score || 0}/100 after ${updated.fix_attempts || 0} attempts`;
+            if (existing) {
+              // Update existing flag — never create a duplicate for the same source_id
+              await base44.asServiceRole.entities.HealingFlag.update(existing.id, {
+                error_message: errMsg,
+                retry_count: (existing.retry_count || 0) + 1,
+                max_retries: MAX_CYCLES,
+                status: "flagged",
+                flagged_at: new Date().toISOString(),
+                cycle_id: cycleId,
+              });
+            } else {
+              await base44.asServiceRole.entities.HealingFlag.create({
+                flag_type: "health_below_100",
+                source_entity: "SystemEnhancement",
+                source_id: goal.id,
+                source_title: goal.title,
+                error_message: errMsg,
+                retry_count: 1,
+                max_retries: MAX_CYCLES,
+                status: "flagged",
+                flagged_at: new Date().toISOString(),
+                cycle_id: cycleId,
+              });
+              flagsCreated++;
+            }
+          }
+        } catch (retryErr: any) {
+          const errMsg = retryErr.message || "Retry failed";
+          if (existing) {
+            await base44.asServiceRole.entities.HealingFlag.update(existing.id, {
+              error_message: errMsg,
+              retry_count: (existing.retry_count || 0) + 1,
+              max_retries: MAX_CYCLES,
+              status: "flagged",
+              flagged_at: new Date().toISOString(),
+              cycle_id: cycleId,
+            });
+          } else {
             await base44.asServiceRole.entities.HealingFlag.create({
-              flag_type: "health_below_100",
+              flag_type: "task_failure",
               source_entity: "SystemEnhancement",
               source_id: goal.id,
               source_title: goal.title,
-              error_message: `Goal "${goal.title}" score stuck at ${updated.audit_result?.score || 0}/100 after ${updated.fix_attempts || 0} attempts`,
-              retry_count: updated.fix_attempts || 0,
-              max_retries: updated.max_fix_attempts || 5,
+              error_message: errMsg,
+              retry_count: 1,
+              max_retries: MAX_CYCLES,
               status: "flagged",
               flagged_at: new Date().toISOString(),
               cycle_id: cycleId,
             });
             flagsCreated++;
           }
-        } catch (retryErr: any) {
-          await base44.asServiceRole.entities.HealingFlag.create({
-            flag_type: "task_failure",
-            source_entity: "SystemEnhancement",
-            source_id: goal.id,
-            source_title: goal.title,
-            error_message: retryErr.message || "Retry failed",
-            retry_count: (goal.fix_attempts || 0) + 1,
-            max_retries: goal.max_fix_attempts || 5,
-            status: "flagged",
-            flagged_at: new Date().toISOString(),
-            cycle_id: cycleId,
-          });
-          flagsCreated++;
         }
       }
     }

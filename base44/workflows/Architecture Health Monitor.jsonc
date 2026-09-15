@@ -9,7 +9,7 @@
       "cron_expression": null,
       "one_time_date": null,
       "timezone": "UTC",
-      "interval_value": 10,
+      "interval_value": 1440,
       "interval_unit": "minutes",
       "interval_anchor": null,
       "ends_type": "never",
@@ -17,7 +17,7 @@
       "ends_after_count": null
     }
   },
-  "description": "Autonomous trigger that checks architecture health every 10 minutes. When health < 100 or capabilities < 100, sets the self-healing swarm into motion: retry \u2192 flag \u2192 audit agent \u2192 repair agent \u2192 validate. Runs 24/7 with zero human input.",
+  "description": "Daily autonomous trigger that checks architecture health. When health < 100 or capabilities < 100, sets the self-healing swarm into motion: retry \u2192 flag \u2192 audit agent \u2192 repair agent \u2192 validate. Throttled from 10-min to daily to prevent wasteful duplicate flag escalation on unbuilt features.",
   "definition": {
     "document": {
       "dsl": "1.0.0",

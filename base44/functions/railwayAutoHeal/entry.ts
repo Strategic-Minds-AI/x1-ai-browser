@@ -63,9 +63,11 @@ export default async function (req) {
       }, { status: 200 });
     }
 
-    // Load recent heal logs for cooldown checking
-    const recentLogs = await base44.asServiceRole.entities.AutoHealLog.list("-healed_at", 100);
+    // Load recent heal logs for cooldown + failure-cap checking
+    const recentLogs = await base44.asServiceRole.entities.AutoHealLog.list("-healed_at", 500);
     const now = Date.now();
+
+    // Don't re-heal the same target within COOLDOWN_MS of a successful action
     const isOnCooldown = (targetId: string) =>
       recentLogs.some(
         (l: any) =>
@@ -74,6 +76,19 @@ export default async function (req) {
           l.healed_at &&
           now - new Date(l.healed_at).getTime() < COOLDOWN_MS
       );
+
+    // Failure cap: stop redeploy loops — max 5 redeploy-type actions per target per 24h.
+    // Prevents infinite redeploy cycling on chronically-failing deployments.
+    const MAX_REDEPLOYS_PER_DAY = 5;
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const redeployCount = (targetId: string) =>
+      recentLogs.filter(
+        (l: any) =>
+          l.target_id === targetId &&
+          ["redeploy", "cancel_and_redeploy", "deploy_latest"].includes(l.action_taken) &&
+          l.healed_at &&
+          now - new Date(l.healed_at).getTime() < ONE_DAY_MS
+      ).length;
 
     // ═══════════════════════════════════════════
     // 1. RAILWAY SERVICE HEALING
@@ -88,6 +103,7 @@ export default async function (req) {
         const targetName = service.name;
 
         if (isOnCooldown(targetId)) continue;
+        if (redeployCount(targetId) >= MAX_REDEPLOYS_PER_DAY) continue;
 
         // FAILED deployment → redeploy
         if (dep?.status === "FAILED" && dep.canRedeploy) {
