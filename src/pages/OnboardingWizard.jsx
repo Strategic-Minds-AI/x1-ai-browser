@@ -9,12 +9,12 @@ import { Rocket, ArrowRight, ArrowLeft, Check, Loader2, Shield, Sparkles, Zap } 
 
 export default function OnboardingWizard() {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(/** @type {Record<string, any>} */ ({}));
   const [question, setQuestion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [done, setDone] = useState(false);
-  const [configPlan, setConfigPlan] = useState(null);
+  const [configPlan, setConfigPlan] = useState(/** @type {any} */ (null));
   const [finalizing, setFinalizing] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [provisioned, setProvisioned] = useState(null);
@@ -44,7 +44,7 @@ export default function OnboardingWizard() {
 
   const submitAnswer = () => {
     if (!question) return;
-    let value = draft;
+    let value = /** @type {any} */ (draft);
     if (question.type === "multiselect") {
       // draft holds comma-joined selected values
       value = draft.split(",").map((s) => s.trim()).filter(Boolean);
