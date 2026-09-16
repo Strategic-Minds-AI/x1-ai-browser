@@ -25,6 +25,7 @@ const ENABLED_KEY = "autocomplete.continuous.enabled";
 const CLEAN_STREAK_PREFIX = "autocomplete.clean_streak.";
 const CLEAN_EVIDENCE_PREFIX = "autocomplete.clean_evidence.";
 const CLEAN_AT_PREFIX = "autocomplete.clean_at.";
+const HEAL_BUDGET_KEY = "autocomplete.healing_budget";
 const LEASE_TTL_MS = 15 * 60 * 1000;
 const LEASE_VERIFY_DELAY_MS = 300;
 const BENCHMARK_FRESH_MS = 6 * 60 * 60 * 1000;
@@ -34,6 +35,7 @@ const MAX_HEAL_RUNS_24H = 6;
 const MAX_ACTIVE_JOBS = 25;
 const MAX_QUEUED_JOBS = 50;
 const MAX_UNRESOLVED_FLAGS = 20;
+const ALLOWED_HEAL_TRIGGERS = new Set(["fortress_engineer_2h", "architecture_daily", "manual_operator"]);
 
 const AUTO_REPAIR_DIMENSIONS = new Set(["build", "lint", "type", "e2e", "browser", "mobile", "visual", "performance"]);
 const LANE_BY_DIMENSION: Record<string, string> = {
@@ -170,6 +172,31 @@ async function releaseLease(db: any, cycleId: string) {
     expires_at: new Date(0).toISOString(),
   };
   await putSetting(db, LEASE_KEY, JSON.stringify(lease), "schedules", "AutoComplete singleton lease released").catch(() => {});
+}
+
+async function reserveHealingBudget(db: any, trigger: string) {
+  const current = await getSetting(db, HEAL_BUDGET_KEY);
+  const state = parseJson(current?.effective_value, {});
+  const now = Date.now();
+  const windowStartMs = state?.window_start ? new Date(state.window_start).getTime() : 0;
+  const invalidWindow = !Number.isFinite(windowStartMs) || windowStartMs <= 0 || windowStartMs > now + MAX_CLOCK_SKEW_MS;
+  const expiredWindow = !invalidWindow && now - windowStartMs >= 24 * 60 * 60 * 1000;
+  const reset = invalidWindow || expiredWindow;
+  const count = reset ? 0 : Math.max(0, Number(state?.count || 0));
+
+  if (count >= MAX_HEAL_RUNS_24H) {
+    return { allowed: false, count, limit: MAX_HEAL_RUNS_24H, window_start: state?.window_start || null };
+  }
+
+  const next = {
+    window_start: reset ? nowIso() : state.window_start,
+    count: count + 1,
+    limit: MAX_HEAL_RUNS_24H,
+    last_trigger: trigger,
+    last_reserved_at: nowIso(),
+  };
+  await putSetting(db, HEAL_BUDGET_KEY, JSON.stringify(next), "budgets", "Reserve bounded AutoComplete healing capacity");
+  return { allowed: true, ...next };
 }
 
 async function logReceipt(db: any, cycleId: string, description: string, metadata: any) {
@@ -429,7 +456,7 @@ async function applyCloudBrowserProbes(base44: any, db: any, benchmarkRows: any[
   await upsertBenchmark(db, benchmarkRows, manifest.id, "browser", {
     status: statusFromBoolean(enginePass, !engine.ok || engineData.configured === false),
     score: enginePass ? 100 : 0,
-    evidence_artifact: probeEvidence(runId, "engineHealth", JSON.stringify(engineData.swarm || engine.error || {})),
+    evidence_artifact: probeEvidence(runId, "engineHealth", JSON.stringify(engineData.swarm || engine.error || {}), manifest.canonical_sha),
     root_cause: enginePass ? "" : (engine.error || engineData.error || `Engine swarm status: ${engineData.swarm?.status || "unknown"}`),
     exact_repair: "Restore a healthy engine swarm, then rerun engineHealth and browser lifecycle regression.",
   }, runId);
@@ -443,7 +470,7 @@ async function applyCloudBrowserProbes(base44: any, db: any, benchmarkRows: any[
     await upsertBenchmark(db, benchmarkRows, manifest.id, "performance", {
       status: statusFromBoolean(Boolean(metricsPass), !metrics.ok),
       score: metricsPass ? 100 : 0,
-      evidence_artifact: probeEvidence(runId, "observability", JSON.stringify({ session: d.session_metrics, job: d.job_metrics, action: d.action_metrics })),
+      evidence_artifact: probeEvidence(runId, "observability", JSON.stringify({ session: d.session_metrics, job: d.job_metrics, action: d.action_metrics }), manifest.canonical_sha),
       root_cause: metricsPass ? "" : (metrics.error || "Required observability percentiles are unavailable"),
       exact_repair: "Restore metrics persistence and P50/P95/P99 calculation, then rerun observability checks.",
     }, runId);
@@ -455,7 +482,7 @@ async function applyCloudBrowserProbes(base44: any, db: any, benchmarkRows: any[
     const td = tenant.data || {};
     const tenantScore = Number(td.score ?? td.pass_rate ?? (td.rls_active ? 100 : 0));
     const tenantPass = tenant.ok && (td.rls_active === true || tenantScore === 100 || td.failed === 0);
-    const tenantEvidence = probeEvidence(runId, "tenantIsolation", JSON.stringify({ score: tenantScore, negative: td.negative_tests, positive: td.positive_tests }));
+    const tenantEvidence = probeEvidence(runId, "tenantIsolation", JSON.stringify({ score: tenantScore, negative: td.negative_tests, positive: td.positive_tests }), manifest.canonical_sha);
     await upsertBenchmark(db, benchmarkRows, manifest.id, "rls", {
       status: statusFromBoolean(tenantPass, !tenant.ok),
       score: tenantPass ? 100 : Math.max(0, Math.min(99, tenantScore || 0)),
@@ -476,7 +503,7 @@ async function applyCloudBrowserProbes(base44: any, db: any, benchmarkRows: any[
     const md = mcp.data || {};
     const mcpScore = Number(md.score ?? md.pass_rate ?? 0);
     const mcpPass = mcp.ok && (mcpScore === 100 || (md.failed === 0 && Number(md.passed || 0) > 0));
-    const mcpEvidence = probeEvidence(runId, "mcpBlackBox", JSON.stringify({ score: mcpScore, passed: md.passed, failed: md.failed, total: md.total_tests }));
+    const mcpEvidence = probeEvidence(runId, "mcpBlackBox", JSON.stringify({ score: mcpScore, passed: md.passed, failed: md.failed, total: md.total_tests }), manifest.canonical_sha);
     await upsertBenchmark(db, benchmarkRows, manifest.id, "e2e", {
       status: statusFromBoolean(mcpPass, !mcp.ok),
       score: mcpPass ? 100 : Math.max(0, Math.min(99, mcpScore || 0)),
@@ -550,8 +577,13 @@ export default async function (req: Request): Promise<Response> {
     const probes: any[] = [];
 
     const cloudManifest = manifests.find((m: any) => m.base44_app_id === CLOUD_BROWSER_APP_ID || m.canonical_repo === CLOUD_BROWSER_REPO);
+    let independentEvidence: any = { ingested: 0, reason: "cloud_manifest_not_found" };
     if (cloudManifest) {
+      if (!await renewLease(db, cycleId)) throw new Error("AutoComplete lease lost before evidence ingestion");
+      independentEvidence = await ingestIndependentEvidence(db, benchmarkRows, cloudManifest);
+      if (!await renewLease(db, cycleId)) throw new Error("AutoComplete lease lost before runtime probes");
       probes.push(...await applyCloudBrowserProbes(base44, db, benchmarkRows, cloudManifest, runId, deepDue && backpressure.ok));
+      if (!await renewLease(db, cycleId)) throw new Error("AutoComplete lease lost after runtime probes");
     }
 
     // Detect setting drift, but do not automatically apply sensitive/production settings.
@@ -585,31 +617,38 @@ export default async function (req: Request): Promise<Response> {
         manifestScores.push({ system: manifest.system_name, skipped: true, reason: "awaiting external benchmark evidence" });
         continue;
       }
-      const scored = await rescoreManifest(db, manifest, benchmarkRows, repairRows);
+      const certificationCycle = deepDue && backpressure.ok;
+      const scored = await rescoreManifest(db, manifest, benchmarkRows, repairRows, certificationCycle);
       manifestScores.push({ system: manifest.system_name, ...scored });
     }
 
-    // Bounded legacy healing is allowed only at a low cadence and never controls VERIFIED_100.
+    // Bounded legacy healing is allowed only from explicit, allowlisted engineering triggers.
+    // It never controls VERIFIED_100 and a failed attempt still consumes one budget slot.
     let healing: any = { attempted: false };
-    const twoHourSlot = now.getUTCMinutes() === 0 && now.getUTCHours() % 2 === 0;
-    if ((requestHealing || twoHourSlot) && backpressure.ok) {
-      const receipts24h = await db.entities.AuditLog.list("-timestamp", 200).catch(() => []);
-      const recentHealRuns = receipts24h.filter((r: any) => r.entity_type === "autocomplete_healing" && ageMs(r.timestamp) < 24 * 60 * 60 * 1000).length;
-      if (recentHealRuns < MAX_HEAL_RUNS_24H) {
+    const healingRequested = requestHealing && ALLOWED_HEAL_TRIGGERS.has(trigger);
+    if (requestHealing && !healingRequested) {
+      healing = { attempted: false, reason: `healing trigger not allowlisted: ${trigger}` };
+    }
+    if (healingRequested && backpressure.ok) {
+      if (!await renewLease(db, cycleId)) throw new Error("AutoComplete lease lost before healing");
+      const budget = await reserveHealingBudget(db, trigger);
+      if (budget.allowed) {
         const heal = await safeInvoke(base44, "runSelfHealingLoop", { source: "autocomplete_continuous", cycle_id: cycleId });
-        healing = { attempted: true, ok: heal.ok, data: heal.data || null, error: heal.error || null, duration_ms: heal.duration_ms };
+        healing = { attempted: true, ok: heal.ok, budget, data: heal.data || null, error: heal.error || null, duration_ms: heal.duration_ms };
         await db.entities.AuditLog.create({
           action: "run",
           entity_type: "autocomplete_healing",
           entity_id: cycleId,
           description: heal.ok ? "Bounded AutoComplete healing cycle executed" : "Bounded AutoComplete healing cycle failed",
-          metadata: { ok: heal.ok, trigger, summary: heal.data || heal.error },
+          metadata: { ok: heal.ok, trigger, budget, summary: heal.data || heal.error },
           timestamp: nowIso(),
           user_email: "system@autocomplete.local",
         }).catch(() => {});
       } else {
-        healing = { attempted: false, reason: "24h healing budget exhausted", recent_heal_runs: recentHealRuns };
+        healing = { attempted: false, reason: "24h healing budget exhausted", budget };
       }
+    } else if (healingRequested && !backpressure.ok) {
+      healing = { attempted: false, reason: "backpressure_open", backpressure };
     }
 
     const summary = {
@@ -618,6 +657,8 @@ export default async function (req: Request): Promise<Response> {
       backpressure,
       manifests: manifestScores,
       probes,
+      independent_evidence: independentEvidence,
+      certification_cycle: deepDue && backpressure.ok,
       drifted_settings: driftedSettings.length,
       open_repairs: repairRows.filter((r: any) => ["open", "planning", "in_progress", "validating", "blocked"].includes(r.status)).length,
       healing,
