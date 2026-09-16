@@ -70,14 +70,28 @@ export default async function (req) {
     const body = await req.json();
     const { tool, params = {}, api_key } = body;
 
+    // ── Auth: API key (external agents) OR authenticated admin (Operator Console) ──
+    let keyRecord = null;
     const apiKey = api_key || (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-    if (!apiKey) return err(401, "API key required", requestId);
-    const keyHash = await hashKey(apiKey);
-    const keys = await base44.asServiceRole.entities.ApiKey.filter({ key_hash: keyHash, active: true });
-    if (!keys.length) return err(401, "Invalid API key", requestId);
-    const keyRecord = keys[0];
-    if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) return err(401, "API key expired", requestId);
-    base44.asServiceRole.entities.ApiKey.update(keyRecord.id, { last_used: new Date().toISOString() }).catch(() => {});
+    if (apiKey) {
+      const keyHash = await hashKey(apiKey);
+      const keys = await base44.asServiceRole.entities.ApiKey.filter({ key_hash: keyHash, active: true });
+      if (keys.length) {
+        keyRecord = keys[0];
+        if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) return err(401, "API key expired", requestId);
+        base44.asServiceRole.entities.ApiKey.update(keyRecord.id, { last_used: new Date().toISOString() }).catch(() => {});
+      }
+    }
+    // Fallback: authenticated admin user (Operator Console UI)
+    if (!keyRecord) {
+      try {
+        const user = await base44.auth.me();
+        if (user && user.role === "admin") {
+          keyRecord = { id: "user_" + user.id, name: user.full_name || user.email || "admin", project_id: null, scopes: ["sessions:read", "sessions:write", "approvals:read", "approvals:write", "jobs:read", "jobs:write"] };
+        }
+      } catch (e) {}
+    }
+    if (!keyRecord) return err(401, "Authentication required (API key or admin session)", requestId);
 
     const requiredScope = TOOL_SCOPES[tool];
     if (!requiredScope) return err(404, "Unknown tool: " + tool, requestId);
