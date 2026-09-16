@@ -433,9 +433,6 @@ export default async function (req: Request): Promise<Response> {
       probes.push(...await applyCloudBrowserProbes(base44, db, benchmarkRows, cloudManifest, runId, deepDue && backpressure.ok));
     }
 
-    const scheduleCheck = await safeInvoke(base44, "checkSchedules", {});
-    probes.push({ probe: "checkSchedules", ok: scheduleCheck.ok, duration_ms: scheduleCheck.duration_ms, data: scheduleCheck.data || scheduleCheck.error });
-
     // Detect setting drift, but do not automatically apply sensitive/production settings.
     if (cloudManifest && driftedSettings.length > 0) {
       const gapId = `AUTO:${cloudManifest.id}:settings-drift`;
