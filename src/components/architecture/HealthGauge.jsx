@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Shield, Cpu, Heart } from "lucide-react";
 
-function GaugeCircle({ value, label, icon: Icon, color }) {
+function GaugeCircle({ value, label, icon: Icon }) {
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
