@@ -8,7 +8,7 @@
       "cron_expression": null,
       "one_time_date": null,
       "timezone": "UTC",
-      "interval_value": 10,
+      "interval_value": 30,
       "interval_unit": "minutes",
       "interval_anchor": null,
       "ends_type": "never",
@@ -26,66 +26,23 @@
     },
     "do": [
       {
-        "check_engine_health": {
+        "run_autocomplete_deep_check": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "engineHealth",
-            "args": {}
-          },
-          "then": "run_audit",
-          "x-base44": {
-            "title": "Check engine health",
-            "description": "Probe all engine instances"
-          }
-        }
-      },
-      {
-        "run_audit": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "runAutonomousAudit",
-            "args": {}
-          },
-          "then": "check_issues",
-          "x-base44": {
-            "title": "Run autonomous audit",
-            "description": "Detect system issues"
-          }
-        }
-      },
-      {
-        "check_issues": {
-          "switch": [
-            {
-              "when": "${ (.run_audit.actions_required // []) | length > 0 }",
-              "then": "trigger_heal"
-            },
-            {
-              "when": "${ true }",
-              "then": "end"
+            "function_name": "runAutoCompleteContinuousCycle",
+            "args": {
+              "trigger": "health_30m",
+              "force_deep": true
             }
-          ],
-          "x-base44": {
-            "title": "Issues detected?",
-            "description": "Branch if remediation needed"
-          }
-        }
-      },
-      {
-        "trigger_heal": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "railwayAutoHeal",
-            "args": {}
           },
           "then": "end",
           "x-base44": {
-            "title": "Trigger auto-heal",
-            "description": "Remediate detected issues"
+            "title": "Run AutoComplete deep check",
+            "description": "Fallback deep validation through the canonical leased orchestrator"
           }
         }
       }
     ]
   },
-  "description": "Every 10 minutes: probes engine health and runs autonomous audit, triggering auto-heal if issues are detected"
+  "description": "Every 30 minutes: invokes a deep AutoComplete validation through the canonical leased orchestrator. It no longer independently triggers production Railway healing."
 }
