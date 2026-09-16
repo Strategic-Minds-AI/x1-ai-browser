@@ -35,7 +35,7 @@ function Step({ n, children }) {
 }
 
 export default function Connect() {
-  const serverUrl = "https://cloud-browser.base44.app/api/mcp";
+  const serverUrl = "https://xtremecloudbrowser.com/api/mcp";
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
