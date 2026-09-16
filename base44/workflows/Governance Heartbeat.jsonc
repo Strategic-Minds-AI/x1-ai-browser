@@ -1,6 +1,6 @@
 {
   "name": "Governance Heartbeat",
-  "description": "5-minute operational validation and reconciliation heartbeat. Inspects worker health, stale sessions, config drift, and logs evidence. Harmless validation is automated; production mutations remain approval-gated.",
+  "description": "Canonical 5-minute AutoComplete heartbeat. All system-hardening clocks converge on the leased orchestrator so overlapping schedulers cannot independently repair or score the platform.",
   "trigger": {
     "condition": null,
     "config": {
@@ -27,64 +27,18 @@
     },
     "do": [
       {
-        "check_worker_health": {
+        "run_autocomplete_continuous": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "engineHealth",
-            "args": {}
-          },
-          "then": "check_stale_sessions",
-          "x-base44": {
-            "title": "Check worker health",
-            "description": "Probe engine and persist health observation"
-          }
-        }
-      },
-      {
-        "check_stale_sessions": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "checkSchedules",
-            "args": {}
-          },
-          "then": "reconcile_settings",
-          "x-base44": {
-            "title": "Check stale sessions",
-            "description": "Detect and handle stale sessions and schedules"
-          }
-        }
-      },
-      {
-        "reconcile_settings": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "reconcileSettings",
+            "function_name": "runAutoCompleteContinuousCycle",
             "args": {
-              "action": "reconcile"
-            }
-          },
-          "then": "log_heartbeat",
-          "x-base44": {
-            "title": "Reconcile settings",
-            "description": "Detect and reconcile configuration drift"
-          }
-        }
-      },
-      {
-        "log_heartbeat": {
-          "call": "invoke_backend_function",
-          "with": {
-            "function_name": "logAudit",
-            "args": {
-              "action": "heartbeat",
-              "entity_type": "governance",
-              "description": "5-minute governance heartbeat completed"
+              "trigger": "governance_5m"
             }
           },
           "then": "end",
           "x-base44": {
-            "title": "Log heartbeat",
-            "description": "Record evidence receipt for governance heartbeat"
+            "title": "Run canonical AutoComplete cycle",
+            "description": "Single leased 5-minute audit, validation, repair-queue, scoring and bounded-healing orchestrator"
           }
         }
       }
