@@ -11,15 +11,17 @@
         "run_cycle": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runEnhancementCycle",
+            "function_name": "runAutoCompleteContinuousCycle",
             "args": {
-              "action": "cycle"
+              "trigger": "fortress_engineer_2h",
+              "force_deep": true,
+              "request_healing": true
             }
           },
           "then": "end",
           "x-base44": {
-            "title": "Run enhancement cycle",
-            "description": "Implement, audit, fix, optimize"
+            "title": "Run bounded AutoComplete engineering cycle",
+            "description": "Deep validate, process bounded healing, rescore, and preserve independent evidence gates"
           }
         }
       }
@@ -31,7 +33,7 @@
       "trigger_type": "scheduled",
       "events": [],
       "schedule_mode": "recurring",
-      "cron_expression": "0 * * * *",
+      "cron_expression": "0 */2 * * *",
       "one_time_date": null,
       "timezone": "America/New_York",
       "interval_value": null,
@@ -42,6 +44,6 @@
       "ends_after_count": null
     }
   },
-  "description": "Autonomously runs the implement\u2192audit\u2192fix\u2192optimize loop over the SystemEnhancement ledger every hour",
+  "description": "Every 2 hours, requests a bounded healing/deep-validation pass through the canonical AutoComplete orchestrator. The legacy enhancement loop no longer owns an independent clock.",
   "name": "Fortress Engineer Cycle"
 }
