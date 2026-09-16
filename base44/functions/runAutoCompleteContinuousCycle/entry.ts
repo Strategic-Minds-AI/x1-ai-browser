@@ -23,7 +23,8 @@ const CLOUD_BROWSER_REPO = "XTREME-SYSTEMS/cloudbrowser-control";
 const LEASE_KEY = "autocomplete.continuous.lease";
 const ENABLED_KEY = "autocomplete.continuous.enabled";
 const CLEAN_STREAK_PREFIX = "autocomplete.clean_streak.";
-const LEASE_TTL_MS = 4 * 60 * 1000;
+const LEASE_TTL_MS = 15 * 60 * 1000;
+const LEASE_VERIFY_DELAY_MS = 300;
 const BENCHMARK_FRESH_MS = 6 * 60 * 60 * 1000;
 const DEEP_INTERVAL_MINUTES = 60;
 const MAX_HEAL_RUNS_24H = 6;
@@ -58,6 +59,10 @@ function parseJson(value: any, fallback: any = null) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function ageMs(ts: any) {
@@ -117,16 +122,40 @@ async function acquireLease(db: any, cycleId: string) {
   if (expiresAt > Date.now() && state?.cycle_id && state.cycle_id !== cycleId) {
     return { acquired: false, holder: state.cycle_id, expires_at: state.expires_at };
   }
+
   const lease = {
     cycle_id: cycleId,
     acquired_at: nowIso(),
     expires_at: new Date(Date.now() + LEASE_TTL_MS).toISOString(),
   };
-  await putSetting(db, LEASE_KEY, JSON.stringify(lease), "schedules", "AutoComplete singleton lease acquired");
+  await putSetting(db, LEASE_KEY, JSON.stringify(lease), "schedules", "AutoComplete singleton lease claim");
+
+  // Two-phase claim verification. This is deliberately fail-closed: if a racing
+  // invocation overwrote our claim, only the final visible holder proceeds.
+  await sleep(LEASE_VERIFY_DELAY_MS);
+  const confirmedRow = await getSetting(db, LEASE_KEY);
+  const confirmed = parseJson(confirmedRow?.effective_value, {});
+  if (confirmed?.cycle_id !== cycleId || new Date(confirmed?.expires_at || 0).getTime() <= Date.now()) {
+    return { acquired: false, holder: confirmed?.cycle_id || null, expires_at: confirmed?.expires_at || null, lost_race: true };
+  }
+
   return { acquired: true, ...lease };
 }
 
+async function renewLease(db: any, cycleId: string) {
+  const current = await getSetting(db, LEASE_KEY);
+  const state = parseJson(current?.effective_value, {});
+  if (state?.cycle_id !== cycleId) return false;
+  const renewed = { ...state, renewed_at: nowIso(), expires_at: new Date(Date.now() + LEASE_TTL_MS).toISOString() };
+  await putSetting(db, LEASE_KEY, JSON.stringify(renewed), "schedules", "AutoComplete singleton lease renewed");
+  const verify = parseJson((await getSetting(db, LEASE_KEY))?.effective_value, {});
+  return verify?.cycle_id === cycleId;
+}
+
 async function releaseLease(db: any, cycleId: string) {
+  const current = await getSetting(db, LEASE_KEY);
+  const state = parseJson(current?.effective_value, {});
+  if (state?.cycle_id !== cycleId) return;
   const lease = {
     cycle_id: cycleId,
     released_at: nowIso(),
