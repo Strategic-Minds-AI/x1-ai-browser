@@ -43,7 +43,7 @@ export function ScreenshotBlock({ url, label }) {
   );
 }
 
-export function DataRow({ label, value, mono }) {
+export function DataRow({ label, value, mono = false }) {
   return (
     <div className="flex gap-2 text-xs">
       <span className="text-muted-foreground shrink-0">{label}:</span>
