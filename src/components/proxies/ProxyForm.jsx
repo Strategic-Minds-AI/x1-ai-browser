@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Save, X } from "lucide-react";
 
-export default function ProxyForm({ onSave, onCancel, initial }) {
+export default function ProxyForm({ onSave, onCancel, initial = null }) {
   const [form, setForm] = useState(initial || { name: "", server: "", username: "", password: "", country: "", protocol: "http", rotation_group: "" });
 
   const set = (k, v) => setForm({ ...form, [k]: v });
