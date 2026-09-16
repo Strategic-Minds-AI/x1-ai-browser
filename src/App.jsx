@@ -47,6 +47,7 @@ import Account from '@/pages/Account';
 import Connect from '@/pages/Connect';
 import KeywordIntelligence from '@/pages/KeywordIntelligence';
 import AutoComplete from '@/pages/AutoComplete';
+import OperatorConsole from '@/pages/OperatorConsole';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -108,6 +109,7 @@ const AuthenticatedApp = () => {
           <Route path="/swarm-orchestrator" element={<SwarmOrchestrator />} />
           <Route path="/architecture" element={<Architecture />} />
           <Route path="/autocomplete" element={<AutoComplete />} />
+          <Route path="/operator-console" element={<OperatorConsole />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

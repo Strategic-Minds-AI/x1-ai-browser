@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User, Cable, TrendingUp, Activity } from "lucide-react";
+import { Monitor, Briefcase, Settings as SettingsIcon, LayoutDashboard, LogOut, Menu, CreditCard, Plug, Bot, Rocket, ShieldCheck, Copy, Server, Moon, Sun, Layers, Target, Sparkles, Box, Radar, Building2, Users, Compass, User, Cable, TrendingUp, Activity, Terminal } from "lucide-react";
 import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
@@ -86,6 +86,7 @@ const workflowSteps = [
     items: [
       { to: "/architecture", label: "Architecture", icon: Building2 },
       { to: "/autocomplete", label: "AutoComplete", icon: Activity },
+      { to: "/operator-console", label: "Operator Console", icon: Terminal },
       { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
     ],
   },
