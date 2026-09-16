@@ -23,9 +23,12 @@ const CLOUD_BROWSER_REPO = "XTREME-SYSTEMS/cloudbrowser-control";
 const LEASE_KEY = "autocomplete.continuous.lease";
 const ENABLED_KEY = "autocomplete.continuous.enabled";
 const CLEAN_STREAK_PREFIX = "autocomplete.clean_streak.";
+const CLEAN_EVIDENCE_PREFIX = "autocomplete.clean_evidence.";
+const CLEAN_AT_PREFIX = "autocomplete.clean_at.";
 const LEASE_TTL_MS = 15 * 60 * 1000;
 const LEASE_VERIFY_DELAY_MS = 300;
 const BENCHMARK_FRESH_MS = 6 * 60 * 60 * 1000;
+const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const DEEP_INTERVAL_MINUTES = 60;
 const MAX_HEAL_RUNS_24H = 6;
 const MAX_ACTIVE_JOBS = 25;
@@ -67,7 +70,12 @@ function sleep(ms: number) {
 
 function ageMs(ts: any) {
   const t = ts ? new Date(ts).getTime() : 0;
-  return t > 0 ? Date.now() - t : Number.POSITIVE_INFINITY;
+  if (!Number.isFinite(t) || t <= 0) return Number.POSITIVE_INFINITY;
+  const delta = Date.now() - t;
+  // Future-dated receipts beyond a small clock-skew allowance are invalid,
+  // not permanently fresh evidence.
+  if (delta < -MAX_CLOCK_SKEW_MS) return Number.POSITIVE_INFINITY;
+  return Math.max(0, delta);
 }
 
 async function safeInvoke(base44: any, name: string, args: any = {}) {
@@ -259,16 +267,54 @@ async function syncRepairTask(db: any, repairRows: any[], manifest: any, dimensi
   }
 }
 
-async function updateCleanStreak(db: any, manifestId: string, allPass: boolean) {
-  const key = CLEAN_STREAK_PREFIX + manifestId;
-  const current = await getSetting(db, key);
+async function updateCleanStreak(db: any, manifestId: string, allPass: boolean, certificationCycle: boolean, latestByDimension: Record<string, any>) {
+  const streakKey = CLEAN_STREAK_PREFIX + manifestId;
+  const evidenceKey = CLEAN_EVIDENCE_PREFIX + manifestId;
+  const cleanAtKey = CLEAN_AT_PREFIX + manifestId;
+  const current = await getSetting(db, streakKey);
   const oldValue = Number(current?.effective_value || 0) || 0;
-  const next = allPass ? oldValue + 1 : 0;
-  await putSetting(db, key, String(next), "observability", `AutoComplete clean streak ${allPass ? "increment" : "reset"}`);
-  return next;
+
+  if (!allPass) {
+    await putSetting(db, streakKey, "0", "observability", "AutoComplete clean streak reset by non-PASS evidence");
+    return { streak: 0, incremented: false, reason: "non_pass" };
+  }
+
+  if (!certificationCycle) {
+    return { streak: oldValue, incremented: false, reason: "quick_cycle_cannot_certify" };
+  }
+
+  const priorEvidence = await getSetting(db, evidenceKey);
+  const priorFingerprint = priorEvidence?.effective_value || "";
+  const priorCleanAt = await getSetting(db, cleanAtKey);
+  const priorCleanMs = priorCleanAt?.effective_value ? new Date(priorCleanAt.effective_value).getTime() : 0;
+
+  const parts: string[] = [];
+  for (const c of CONSTITUTION) {
+    const row = latestByDimension[c.dimension];
+    if (!row || row.status !== "PASS" || !row.evidence_artifact || !row.run_id || ageMs(row.validated_at) > BENCHMARK_FRESH_MS) {
+      return { streak: oldValue, incremented: false, reason: `incomplete_evidence:${c.dimension}` };
+    }
+    const rowMs = new Date(row.validated_at).getTime();
+    if (priorCleanMs > 0 && rowMs <= priorCleanMs) {
+      return { streak: oldValue, incremented: false, reason: `replayed_evidence:${c.dimension}` };
+    }
+    parts.push(`${c.dimension}:${row.run_id}:${row.validated_at}:${row.evidence_artifact}`);
+  }
+
+  const fingerprint = parts.join("|");
+  if (fingerprint === priorFingerprint) {
+    return { streak: oldValue, incremented: false, reason: "same_evidence_fingerprint" };
+  }
+
+  const next = oldValue + 1;
+  const cleanAt = nowIso();
+  await putSetting(db, streakKey, String(next), "observability", "AutoComplete clean streak incremented by fresh certification evidence");
+  await putSetting(db, evidenceKey, fingerprint, "observability", "AutoComplete certification evidence fingerprint");
+  await putSetting(db, cleanAtKey, cleanAt, "observability", "AutoComplete last clean certification timestamp");
+  return { streak: next, incremented: true, reason: "fresh_certification" };
 }
 
-async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], repairRows: any[]) {
+async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], repairRows: any[], certificationCycle = false) {
   const rows = allBenchmarkRows
     .filter((r: any) => r.system_manifest_id === manifest.id)
     .sort((a: any, b: any) => new Date(b.validated_at || 0).getTime() - new Date(a.validated_at || 0).getTime());
@@ -294,6 +340,9 @@ async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], 
         evidence_artifact: row?.evidence_artifact || "",
       };
     }
+    if (row.status === "PASS" && !row.evidence_artifact) {
+      row = { ...row, status: "UNKNOWN", score: 0, root_cause: "PASS row has no evidence artifact", exact_repair: `Produce independently verifiable ${c.dimension} evidence.` };
+    }
     const score = row.status === "PASS" ? Math.max(0, Math.min(100, Number(row.score || 100))) : 0;
     weighted += (c.weight * score) / 100;
     if (row.status !== "PASS") {
@@ -303,15 +352,17 @@ async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], 
     await syncRepairTask(db, repairRows, manifest, c.dimension, row);
   }
 
-  const cleanStreak = await updateCleanStreak(db, manifest.id, allPass);
-  const verified100 = allPass && Math.round(weighted) === 100 && cleanStreak >= 3;
+  const clean = await updateCleanStreak(db, manifest.id, allPass, certificationCycle, latestByDimension);
+  const sourcePinned = Boolean(manifest.canonical_sha);
+  if (!sourcePinned) failures.push("source_truth: canonical_sha is not pinned");
+  const verified100 = allPass && sourcePinned && Math.round(weighted) === 100 && clean.streak >= 3;
   const healthScore = Math.round(weighted);
   const healthState = verified100 ? "verified_100" : healthScore >= 85 ? "healthy" : healthScore >= 50 ? "degraded" : "blocked";
   const status = verified100 ? "verified_100" : "baselined";
   const whatIsWrong = failures.length ? failures.slice(0, 8).join(" | ") : "All current benchmark dimensions PASS; clean-cycle proof still accumulating.";
   const pathTo100 = verified100
     ? "Preservation mode: retain fresh evidence and prevent regression."
-    : `Close ${failures.length} non-PASS/stale dimension(s); require all 11 dimensions PASS with fresh evidence and 3 consecutive clean cycles. Current clean streak: ${cleanStreak}/3.`;
+    : `Close ${failures.length} blocker(s); require pinned canonical SHA, all 11 dimensions PASS with fresh non-replayed evidence, and 3 independent certification cycles. Current clean streak: ${clean.streak}/3 (${clean.reason}).`; 
 
   await db.entities.SystemManifest.update(manifest.id, {
     health_score: healthScore,
@@ -321,7 +372,7 @@ async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], 
     path_to_100: pathTo100,
   });
 
-  return { health_score: healthScore, health_state: healthState, status, clean_streak: cleanStreak, verified_100: verified100, failures };
+  return { health_score: healthScore, health_state: healthState, status, clean_streak: clean.streak, clean_cycle_incremented: clean.incremented, clean_cycle_reason: clean.reason, source_pinned: sourcePinned, verified_100: verified100, failures };
 }
 
 function probeEvidence(runId: string, name: string, detail: string) {
