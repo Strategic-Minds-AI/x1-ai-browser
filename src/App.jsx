@@ -45,6 +45,7 @@ import AdminPortal from '@/pages/AdminPortal';
 import AutoRecommender from '@/pages/AutoRecommender';
 import Account from '@/pages/Account';
 import Connect from '@/pages/Connect';
+import KeywordIntelligence from '@/pages/KeywordIntelligence';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -108,6 +109,7 @@ const AuthenticatedApp = () => {
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
+          <Route path="/keyword-intelligence" element={<KeywordIntelligence />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/mcp-creator" element={<McpCreator />} />
           <Route path="/billing" element={<Billing />} />
