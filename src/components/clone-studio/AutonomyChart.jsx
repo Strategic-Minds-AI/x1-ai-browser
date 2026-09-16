@@ -21,7 +21,7 @@ const AUTONOMOUS_COLOR = "#10b981"; // emerald
 const INFERENCE_COLOR = "#f59e0b"; // amber
 const UNRESOLVED_COLOR = "#ef4444"; // red
 
-export default function AutonomyChart({ projectId }) {
+export default function AutonomyChart({ projectId = null }) {
   const [gaps, setGaps] = useState([]);
   const [loading, setLoading] = useState(true);
 
