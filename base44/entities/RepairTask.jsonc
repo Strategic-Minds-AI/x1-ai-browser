@@ -1,0 +1,115 @@
+{
+  "name": "RepairTask",
+  "type": "object",
+  "properties": {
+    "system_manifest_id": {
+      "type": "string",
+      "description": "Reference to the SystemManifest this repair targets"
+    },
+    "gap_id": {
+      "type": "string",
+      "description": "Stable gap identifier (e.g. G-001)"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "default": "P2"
+    },
+    "category": {
+      "type": "string",
+      "description": "Defect category (security, data, runtime, workflow, rls, etc.)"
+    },
+    "finding": {
+      "type": "string",
+      "description": "The defect / failure observed"
+    },
+    "root_cause": {
+      "type": "string"
+    },
+    "exact_repair": {
+      "type": "string",
+      "description": "Smallest reversible repair plan"
+    },
+    "acceptance_proof": {
+      "type": "string",
+      "description": "What evidence closes this gap"
+    },
+    "auto_repair": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether AutoComplete may attempt this repair (diagnose/draft only by default)"
+    },
+    "approval_required": {
+      "type": "boolean",
+      "default": true
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "planning",
+        "in_progress",
+        "validating",
+        "resolved",
+        "blocked",
+        "rejected"
+      ],
+      "default": "open"
+    },
+    "assigned_lane": {
+      "type": "string",
+      "description": "Owner lane (System Engineer, Security Auditor, Runtime/DevOps, etc.)"
+    },
+    "branch": {
+      "type": "string",
+      "description": "Branch the repair executes on"
+    },
+    "sandbox": {
+      "type": "string",
+      "description": "Sandbox identifier for isolated execution"
+    },
+    "rollback_pointer": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "string",
+      "description": "Source of the finding (live logs, advisors, etc.)"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "system_manifest_id",
+    "priority",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
