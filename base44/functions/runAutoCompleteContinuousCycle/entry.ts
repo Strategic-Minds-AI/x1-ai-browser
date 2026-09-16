@@ -203,7 +203,7 @@ async function upsertBenchmark(db: any, existingRows: any[], manifestId: string,
     root_cause: patch.root_cause || "",
     exact_repair: patch.exact_repair || "",
     run_id: runId,
-    validated_at: nowIso(),
+    validated_at: patch.validated_at || nowIso(),
   };
   if (existing) {
     await db.entities.BenchmarkResult.update(existing.id, row);
@@ -213,6 +213,47 @@ async function upsertBenchmark(db: any, existingRows: any[], manifestId: string,
   const created = await db.entities.BenchmarkResult.create(row);
   existingRows.push(created);
   return created;
+}
+
+async function ingestIndependentEvidence(db: any, benchmarkRows: any[], manifest: any) {
+  if (!manifest?.canonical_sha) return { ingested: 0, reason: "canonical_sha_not_pinned" };
+  const receipts = await db.entities.EvidenceReceipt.list("-timestamp", 500).catch(() => []);
+  const allowedDimensions = new Set(CONSTITUTION.map((c) => c.dimension));
+  const latest: Record<string, any> = {};
+
+  for (const receipt of receipts) {
+    const data = receipt?.data || {};
+    const dimension = data.dimension;
+    if (receipt.system_id !== manifest.id || !allowedDimensions.has(dimension)) continue;
+    if (data.independent_validator !== true && data.validation_role !== "independent_validator") continue;
+    if (data.source_sha !== manifest.canonical_sha) continue;
+    if (!receipt.receipt_id || ageMs(receipt.timestamp) > BENCHMARK_FRESH_MS) continue;
+    if (!latest[dimension] || new Date(receipt.timestamp || 0).getTime() > new Date(latest[dimension].timestamp || 0).getTime()) {
+      latest[dimension] = receipt;
+    }
+  }
+
+  let ingested = 0;
+  const receiptIds: string[] = [];
+  for (const c of CONSTITUTION) {
+    const receipt = latest[c.dimension];
+    if (!receipt) continue;
+    const data = receipt.data || {};
+    const status = receipt.status === "pass" ? "PASS" : receipt.status === "fail" ? "FAIL" : receipt.status === "blocked" ? "BLOCKED" : "UNKNOWN";
+    await upsertBenchmark(db, benchmarkRows, manifest.id, c.dimension, {
+      status,
+      score: status === "PASS" ? Math.max(0, Math.min(100, Number(data.score ?? 100))) : 0,
+      evidence_artifact: `evidence://${receipt.receipt_id}?source_sha=${manifest.canonical_sha}`,
+      failure_fingerprint: data.failure_fingerprint || "",
+      root_cause: status === "PASS" ? "" : (data.root_cause || receipt.actual_result || `Independent validator returned ${receipt.status}`),
+      exact_repair: data.exact_repair || "",
+      validated_at: receipt.timestamp,
+    }, data.validation_run_id || receipt.receipt_id);
+    ingested++;
+    receiptIds.push(receipt.receipt_id);
+  }
+
+  return { ingested, receipt_ids: receiptIds };
 }
 
 function statusFromBoolean(pass: boolean, blocked = false) {
@@ -375,8 +416,8 @@ async function rescoreManifest(db: any, manifest: any, allBenchmarkRows: any[], 
   return { health_score: healthScore, health_state: healthState, status, clean_streak: clean.streak, clean_cycle_incremented: clean.incremented, clean_cycle_reason: clean.reason, source_pinned: sourcePinned, verified_100: verified100, failures };
 }
 
-function probeEvidence(runId: string, name: string, detail: string) {
-  return `autocomplete://${runId}/${name}?detail=${encodeURIComponent(detail.slice(0, 400))}`;
+function probeEvidence(runId: string, name: string, detail: string, sourceSha?: string) {
+  return `autocomplete://${runId}/${name}?source_sha=${encodeURIComponent(sourceSha || "UNPINNED")}&detail=${encodeURIComponent(detail.slice(0, 400))}`;
 }
 
 async function applyCloudBrowserProbes(base44: any, db: any, benchmarkRows: any[], manifest: any, runId: string, deep: boolean) {
