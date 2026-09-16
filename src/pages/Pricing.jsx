@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
-import { Check, Zap, Crown, Building2, Rocket, ArrowRight, Cloud, Sparkles, Loader2 } from "lucide-react";
+import { Check, Zap, Building2, Rocket, ArrowRight, Cloud, Sparkles, Loader2 } from "lucide-react";
 
 const plans = [
   {

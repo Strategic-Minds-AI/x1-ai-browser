@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Brain, Shield, Database, Server, Zap, Globe, Loader2,
-  CheckCircle2, XCircle, AlertCircle, Sparkles, Search,
-  FileCode, Layers, RefreshCw, ChevronDown, ChevronRight,
+  CheckCircle2, AlertCircle, Sparkles, Search,
+  FileCode, Layers, ChevronDown, ChevronRight,
 } from "lucide-react";
 
 const GAP_TYPE_CONFIG = {

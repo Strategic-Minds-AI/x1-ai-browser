@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, CreditCard, DollarSign, Server, Bot, Ticket, AlertTriangle, CheckCircle2, Activity, Eye } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, CreditCard, DollarSign, Server, Bot, Ticket, Activity, Eye } from "lucide-react";
 
 export default function AdminOverview() {
   const [stats, setStats] = useState(null);

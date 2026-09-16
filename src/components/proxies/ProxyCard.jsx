@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Globe, Trash2, Pencil, Zap, Star, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Trash2, Pencil, Zap, Star, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 export default function ProxyCard({ proxy, isDefault, onEdit, onDelete, onTest, onToggleActive, onSetDefault, sessionCount }) {
   const [testing, setTesting] = useState(false);

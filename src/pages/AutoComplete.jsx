@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ShieldCheck, Plus, RefreshCw, Play, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Activity, Gauge, ListChecks, FileCheck2, Lock } from "lucide-react";
+import { ShieldCheck, Plus, RefreshCw, Play, AlertTriangle, CheckCircle2, XCircle, HelpCircle, Gauge, ListChecks, FileCheck2, Lock } from "lucide-react";
 
 const CONSTITUTION = [
   { dimension: "build", gate: "HARD", weight: 15 },

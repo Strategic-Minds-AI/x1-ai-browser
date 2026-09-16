@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Phone, Mail, User, Clock, Database, Layers, Activity, Bot, RefreshCw, ArrowRight,
+  Phone, Mail, User, Database, Layers, Activity, Bot, RefreshCw, ArrowRight,
 } from "lucide-react";
 
 export default function SkipTracingDashboard({ traces, loading, onRefresh }) {

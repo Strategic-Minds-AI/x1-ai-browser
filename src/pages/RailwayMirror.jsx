@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   RefreshCw, AlertCircle, CheckCircle2, XCircle, Clock,
-  Server, Activity, Zap, RotateCcw, Square, Undo2, Ban,
+  Server, Activity, RotateCcw, Square, Undo2, Ban,
   Rocket, Settings2, ExternalLink, Cpu, MemoryStick, Loader2, FolderTree
 } from "lucide-react";
 

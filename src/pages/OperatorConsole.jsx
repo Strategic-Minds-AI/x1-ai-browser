@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Play, RefreshCw, Camera, Eye, MousePointerClick, FileText, ShieldCheck, Activity, Terminal, Image as ImageIcon, CheckCircle2, XCircle } from "lucide-react";
 
 const TOOL_GROUPS = [

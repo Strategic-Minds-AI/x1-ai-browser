@@ -11,9 +11,9 @@ import StepIndicator from "@/components/onboarding/StepIndicator";
 import {
   Globe, Database, Bot, TrendingUp, Sparkles, Check, ArrowRight, ArrowLeft,
   Search, FileText, ShoppingCart, Building2, Mail, Briefcase, Newspaper,
-  DollarSign, Share2, MousePointerClick, RefreshCw, Eye, Copy, Download,
-  Lock, Code2, Zap, Rocket, Cloud, Loader2, Wand2, CheckCircle2,
-  Star, Home, Shield, Clock, AlertTriangle, FlaskConical, Play, Target
+  DollarSign, Share2, MousePointerClick, RefreshCw, Eye, Copy,
+  Lock, Code2, Zap, Rocket, Loader2, Wand2, CheckCircle2,
+  Star, Home, AlertTriangle, FlaskConical, Play, Target
 } from "lucide-react";
 
 const goals = [

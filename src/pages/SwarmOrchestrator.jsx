@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Radar, Phone, Mail, MapPin, Users, Search, AlertCircle, CheckCircle2,
-  Clock, Database, Loader2, Building, User, Globe, Bot, Cpu, Zap,
+import { AlertCircle, CheckCircle2,
+  Clock, Loader2, Bot, Zap,
   Activity, Layers, ArrowRight, RefreshCw, Home, UserSearch, FileSearch,
 } from "lucide-react";
 

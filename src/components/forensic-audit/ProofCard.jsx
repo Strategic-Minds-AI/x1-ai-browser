@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, ExternalLink, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Image } from "@/components/ui/image";

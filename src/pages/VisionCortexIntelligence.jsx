@@ -3,12 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Eye, Brain, DollarSign, Sparkles, RefreshCw, Play, Loader2, TrendingUp,
+  Eye, Brain, DollarSign, Sparkles, RefreshCw, Loader2, TrendingUp,
   Target, Lightbulb, Crown, AlertTriangle, CheckCircle2, ArrowRight,
-  Search, Database, Zap, Activity, BookOpen,
+  Search, Zap, Activity, BookOpen,
 } from 'lucide-react';
 import MonetizationTab from '@/components/vision-cortex/MonetizationTab';
 import BrainLinkTab from '@/components/vision-cortex/BrainLinkTab';

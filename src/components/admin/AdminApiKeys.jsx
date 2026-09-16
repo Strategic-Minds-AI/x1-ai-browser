@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Key, Plus, Copy, Check, Trash2, ShieldCheck, Crown, User, Wrench, Eye,
-  ChevronDown, ChevronRight, Zap,
+import { Plus, Copy, Check, Trash2, ShieldCheck, Crown, User, Wrench, Eye,
+  ChevronDown, ChevronRight,
 } from "lucide-react";
 
 const ROLES = [

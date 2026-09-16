@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { RefreshCw, Activity, Clock, AlertTriangle, CheckCircle2, XCircle, Server, MapPin, Zap } from "lucide-react";
+import { Activity, Clock, AlertTriangle, CheckCircle2, XCircle, Server, MapPin, Zap } from "lucide-react";
 
 const STATUS_CONFIG = {
   healthy: { color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: CheckCircle2, label: "Healthy" },

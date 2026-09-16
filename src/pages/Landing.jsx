@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import {
-  Zap, Globe, Search, Code2, Shield, Bot, Copy, Monitor,
-  ArrowRight, Check, Sparkles, Lock, Database, Eye, Clock, TrendingUp,
-  MousePointerClick, FileSearch, Download, RefreshCw, ChevronRight, Box, Ghost, Repeat
+  Zap, Globe, Search, Code2, Shield, Bot, Monitor,
+  ArrowRight, Sparkles, Lock, Database, Eye, TrendingUp,
+  MousePointerClick, Download, RefreshCw, Box, Ghost, Repeat
 } from "lucide-react";
 
 const useCases = [

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import CopyBlock from "@/components/CopyBlock";
 import {
   Bot, Sparkles, Code2, Globe, Plus, RefreshCw, Check, Copy,
-  MessageSquare, Zap, FileText, Wand2, Key, ExternalLink, Trash2
+  MessageSquare, Wand2, Key, Trash2
 } from "lucide-react";
 
 const clients = [

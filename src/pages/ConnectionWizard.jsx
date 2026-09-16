@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Triangle, Github, HardDrive, Database, Sparkles, Shield, Zap, ArrowRight, Calendar, FileText, CheckSquare, Mail, Table } from "lucide-react";
+import { Triangle, HardDrive, Database, Sparkles, Shield, Zap, ArrowRight, Calendar, FileText, CheckSquare, Mail, Table } from "lucide-react";
 import IntegrationCard from "@/components/connection-wizard/IntegrationCard";
 import ConnectModal from "@/components/connection-wizard/ConnectModal";
 

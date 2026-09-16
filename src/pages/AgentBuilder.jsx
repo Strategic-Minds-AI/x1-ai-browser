@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Bot, Plus, Sparkles, Globe, Database, MousePointerClick, Eye, Copy,
-  Download, RefreshCw, Lock, Shield, Play, Pause, Trash2, Loader2,
-  Search, FileText, Monitor, Zap, Code2, Rocket,
+  Bot, Plus, Globe, Database, MousePointerClick, Eye, Copy,
+  Download, RefreshCw, Lock, Play, Pause, Trash2, Loader2,
+  Search, FileText, Monitor, Code2, Rocket,
   Clock, Upload
 } from "lucide-react";
 

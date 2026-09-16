@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cable, Copy, Check, ExternalLink, RefreshCw, ShieldCheck } from "lucide-react";
+import { Cable, Copy, Check, RefreshCw, ShieldCheck } from "lucide-react";
 
 function CopyButton({ value, className }) {
   const [copied, setCopied] = useState(false);

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Bot, Sparkles, X, Loader2, AlertCircle, PanelLeftClose } from "lucide-react";
+import { Bot, Sparkles, Loader2, AlertCircle, PanelLeftClose } from "lucide-react";
 import MessageBubble from "@/components/ai-chat/MessageBubble";
 import ChatInput from "@/components/ai-chat/ChatInput";
 import SuggestionsBar from "@/components/copilot/SuggestionsBar";

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { LayoutDashboard, Monitor, Briefcase, Calendar, DollarSign, Settings, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, ScrollText, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Cloud, Moon, Sun } from "lucide-react";
+import { LayoutDashboard, Monitor, Briefcase, Calendar, DollarSign, Settings, Code2, Trophy, Sparkles, Activity, AlertTriangle, CreditCard, Users, ScrollText, Plug, Folder, Bot, Wand2, Rocket, ShieldCheck, Globe, Shield, Moon, Sun } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useTheme } from "next-themes";
 

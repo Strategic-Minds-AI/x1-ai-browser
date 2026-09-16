@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  CheckCircle2, XCircle, AlertCircle, Shield, ShieldCheck, Trophy, RefreshCw,
+  CheckCircle2, XCircle, AlertCircle, Shield, Trophy, RefreshCw,
   ChevronDown, ChevronRight, ArrowRightLeft, Eye, Sparkles, AlertTriangle,
-  Cloud, Zap, Target, ListChecks, BookOpen, Brain, Rocket, Play, Loader2,
-  TrendingUp, TrendingDown, Lightbulb, Crown,
+  Cloud, Zap, Target, ListChecks, BookOpen, Brain, Rocket, Play, Loader2, Lightbulb, Crown,
 } from 'lucide-react';
 import {
   CURRENT_CAPABILITIES, XTREMEAI_CAPABILITIES, FAULTLINE_CAPABILITIES,

@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Ticket, Plus, Trash2, Copy, Check, Gift } from "lucide-react";
+import { Plus, Trash2, Copy, Check, Gift } from "lucide-react";
 
 const PLANS = ["free", "developer", "startup", "enterprise"];
 

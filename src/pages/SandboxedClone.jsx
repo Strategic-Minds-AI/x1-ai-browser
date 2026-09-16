@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import {
-  Loader2, Globe, Rocket, CheckCircle2, XCircle, AlertCircle,
+  Loader2, Globe, Rocket, CheckCircle2, AlertCircle,
   RefreshCw, Target, Zap, Eye, Server, Repeat, Box, Ghost, Radio, Cloud,
 } from "lucide-react";
 

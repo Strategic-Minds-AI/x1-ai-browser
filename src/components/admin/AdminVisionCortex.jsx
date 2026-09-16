@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Eye, Link2, Unlink, Activity, Loader2, CheckCircle2, AlertTriangle,
   ScanLine, HeartPulse, Zap, Sparkles, Settings, Code, Cpu, Rocket,
-  ArrowRightLeft, Play, RefreshCw,
+  ArrowRightLeft, Play,
 } from "lucide-react";
 
 const PUBLISHED_URL = "https://cloud-browser.base44.app";

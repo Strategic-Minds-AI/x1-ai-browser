@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Crown, Shield, Eye, Mail, Loader2, CheckCircle2, XCircle, Building2, Link as LinkIcon, Copy } from "lucide-react";
+import { Users, UserPlus, Crown, Shield, Eye, Mail, Loader2, CheckCircle2, XCircle, Building2, Link as LinkIcon } from "lucide-react";
 
 const ROLE_ICONS = { admin: Crown, user: Shield, viewer: Eye };
 const ROLE_COLORS = { admin: "text-orange-500", user: "text-blue-500", viewer: "text-muted-foreground" };

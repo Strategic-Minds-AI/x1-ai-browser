@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, DollarSign, Users, Mail, TrendingUp, Target, Building2, Copy, CheckCircle2 } from 'lucide-react';
+import { Loader2, DollarSign, Users, Mail, TrendingUp, Building2, Copy, CheckCircle2 } from 'lucide-react';
 
 export default function MonetizationTab({ onRunAction, actionLoading }) {
   const [assets, setAssets] = useState([]);
