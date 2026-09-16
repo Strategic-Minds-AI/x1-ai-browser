@@ -35,7 +35,7 @@ function Step({ n, children }) {
 }
 
 export default function Connect() {
-  const serverUrl = new URL("/api/mcp", window.location.origin).toString();
+  const serverUrl = "https://cloud-browser.base44.app/api/mcp";
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
