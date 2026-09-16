@@ -6,6 +6,7 @@ import { UserPlus, Users, Crown, Shield, Eye, Trash2, Loader2, CheckCircle2, Mai
 
 const ROLE_ICONS = { admin: Crown, user: Shield, viewer: Eye };
 const ROLE_COLORS = { admin: "text-orange-500", user: "text-blue-500", viewer: "text-muted-foreground" };
+const usersApi = /** @type {any} */ (base44).users;
 
 export default function AdminTeam() {
   const [members, setMembers] = useState([]);
@@ -36,7 +37,7 @@ export default function AdminTeam() {
     const batchResults = [];
     for (const email of emailList) {
       try {
-        await base44.users.inviteUser(email, role);
+        await usersApi.inviteUser(email, role);
         batchResults.push({ email, ok: true, msg: "Invited" });
       } catch (err) {
         batchResults.push({ email, ok: false, msg: err.response?.data?.error || err.message });
