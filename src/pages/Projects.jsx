@@ -21,7 +21,7 @@ const GATEWAY_PATH = "/api/functions/cloudBrowserGatewayV6";
 const MCP_PATH = "/api/functions/mcpTools";
 const DEFAULT_SCOPES = ["sessions:read", "sessions:write", "jobs:read", "jobs:write"];
 
-function CopyBlock({ text, label }) {
+function CopyBlock({ text, label = "" }) {
   const [copied, setCopied] = useState(false);
   const copy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
   return (
