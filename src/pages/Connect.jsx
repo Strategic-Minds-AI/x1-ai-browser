@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Cable, Copy, Check, RefreshCw, ShieldCheck } from "lucide-react";
 
-function CopyButton({ value, className }) {
+function CopyButton({ value, className = "" }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     try {
