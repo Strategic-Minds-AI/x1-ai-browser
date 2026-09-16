@@ -12,6 +12,8 @@ import {
   CheckCircle2, Search,
 } from "lucide-react";
 
+const usersApi = /** @type {any} */ (base44).users;
+
 export default function AdminUsers() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -38,7 +40,7 @@ export default function AdminUsers() {
     setInviting(true);
     setInviteResult(null);
     try {
-      await base44.users.inviteUser(inviteEmail.trim(), inviteRole);
+      await usersApi.inviteUser(inviteEmail.trim(), inviteRole);
       setInviteResult({ success: true, email: inviteEmail.trim() });
       setInviteEmail("");
       setShowInvite(false);
