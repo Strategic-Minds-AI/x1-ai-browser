@@ -65,7 +65,7 @@ export default function Dashboard() {
             time: j.created_date,
             icon: Activity,
           })),
-        ].sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0)).slice(0, 8);
+        ].sort((a, b) => new Date(b.time || 0).getTime() - new Date(a.time || 0).getTime()).slice(0, 8);
         setRecentActivity(activity);
       } catch (e) {
         console.error(e);
