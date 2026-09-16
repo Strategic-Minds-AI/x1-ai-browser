@@ -17,7 +17,7 @@
       "ends_after_count": null
     }
   },
-  "description": "Daily autonomous trigger that checks architecture health. When health < 100 or capabilities < 100, sets the self-healing swarm into motion: retry \u2192 flag \u2192 audit agent \u2192 repair agent \u2192 validate. Throttled from 10-min to daily to prevent wasteful duplicate flag escalation on unbuilt features.",
+  "description": "Daily deep architecture pass through the canonical AutoComplete orchestrator. It may request bounded healing, but all scoring still requires independent fresh evidence and clean-cycle proof.",
   "definition": {
     "document": {
       "dsl": "1.0.0",
@@ -30,13 +30,17 @@
         "run_healing_loop": {
           "call": "invoke_backend_function",
           "with": {
-            "function_name": "runSelfHealingLoop",
-            "args": {}
+            "function_name": "runAutoCompleteContinuousCycle",
+            "args": {
+              "trigger": "architecture_daily",
+              "force_deep": true,
+              "request_healing": true
+            }
           },
           "then": "end",
           "x-base44": {
-            "title": "Run Self-Healing Loop",
-            "description": "Check architecture health and capabilities. If < 100, retry failed goals, flag issues, audit root cause, repair, and validate \u2014 autonomously."
+            "title": "Run daily AutoComplete architecture pass",
+            "description": "Deep audit, bounded healing request, independent validation, rescore and receipt through one leased orchestrator"
           }
         }
       }
