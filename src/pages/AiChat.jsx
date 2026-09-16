@@ -7,6 +7,7 @@ import ConversationList from "@/components/ai-chat/ConversationList";
 import ChatInput from "@/components/ai-chat/ChatInput";
 
 const AGENT_NAME = "autonomous_agent";
+const agentsApi = /** @type {any} */ (base44).agents;
 
 export default function AiChat() {
   const [conversations, setConversations] = useState([]);
@@ -20,7 +21,7 @@ export default function AiChat() {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const list = await base44.agents.listConversations({ agent_name: AGENT_NAME });
+      const list = await agentsApi.listConversations({ agent_name: AGENT_NAME });
       setConversations(list || []);
     } catch { setConversations([]); }
     setLoading(false);
@@ -35,9 +36,9 @@ export default function AiChat() {
     let unsub = () => {};
     (async () => {
       try {
-        const conv = await base44.agents.getConversation(activeId);
+        const conv = await agentsApi.getConversation(activeId);
         setMessages(conv.messages || []);
-        unsub = base44.agents.subscribeToConversation(activeId, (data) => {
+        unsub = agentsApi.subscribeToConversation(activeId, (data) => {
           setMessages(data.messages || []);
           setSending(false);
         });
@@ -54,7 +55,7 @@ export default function AiChat() {
 
   const handleCreate = async () => {
     try {
-      const conv = await base44.agents.createConversation({
+      const conv = await agentsApi.createConversation({
         agent_name: AGENT_NAME,
         metadata: { name: `Chat ${conversations.length + 1}`, description: "Autonomous agent conversation" },
       });
@@ -69,7 +70,7 @@ export default function AiChat() {
     setError("");
     try {
       const conv = conversations.find((c) => c.id === activeId);
-      await base44.agents.addMessage(conv, { role: "user", content: text });
+      await agentsApi.addMessage(conv, { role: "user", content: text });
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -82,13 +83,13 @@ export default function AiChat() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       const conv = conversations.find((c) => c.id === activeId);
-      await base44.agents.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
+      await agentsApi.addMessage(conv, { role: "user", content: `I've uploaded a file: ${file.name}`, file_urls: [file_url] });
     } catch (err) { setError(err.message); setSending(false); }
   };
 
   const handleDelete = async (id) => {
     try {
-      await base44.agents.updateConversation(id, { metadata: { archived: true } });
+      await agentsApi.updateConversation(id, { metadata: { archived: true } });
       setConversations(conversations.filter((c) => c.id !== id));
       if (activeId === id) setActiveId(null);
     } catch { /* ignore */ }
