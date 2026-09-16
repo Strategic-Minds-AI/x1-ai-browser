@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: AutoComplete source contract tests
+        run: node --test tests/autocomplete-source-contract.test.mjs
+
       - name: Build
         run: npm run build
 
