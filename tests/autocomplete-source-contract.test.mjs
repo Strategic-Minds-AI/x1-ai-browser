@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import ts from 'typescript';
 
 function read(path) {
   return readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -14,6 +15,16 @@ const bootstrap = read('base44/functions/bootstrapAutoCompleteControlPlane/entry
 const preflight = read('base44/functions/autoCompletePreflight/entry.ts');
 const wrapper = read('base44/functions/runAutoCompleteGovernedCycle/entry.ts');
 
+const backendFunctionFiles = [
+  'base44/functions/runAutoCompleteContinuousCycle/entry.ts',
+  'base44/functions/runAutoCompleteGovernedCycle/entry.ts',
+  'base44/functions/enforceAutoCompleteRepairIntegrity/entry.ts',
+  'base44/functions/submitAutoCompleteValidationReceipt/entry.ts',
+  'base44/functions/getAutoCompleteValidationStatus/entry.ts',
+  'base44/functions/autoCompletePreflight/entry.ts',
+  'base44/functions/bootstrapAutoCompleteControlPlane/entry.ts',
+];
+
 const schedulerFiles = [
   'base44/workflows/Governance Heartbeat.jsonc',
   'base44/workflows/System Health Monitor.jsonc',
@@ -21,6 +32,22 @@ const schedulerFiles = [
   'base44/workflows/Architecture Health Monitor.jsonc',
   'base44/workflows/Railway Auto-Heal.jsonc',
 ];
+
+test('AutoComplete backend function sources are TypeScript-syntax valid', () => {
+  for (const path of backendFunctionFiles) {
+    const source = read(path);
+    const result = ts.transpileModule(source, {
+      fileName: path,
+      reportDiagnostics: true,
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.ESNext,
+      },
+    });
+    const errors = (result.diagnostics || []).filter((d) => d.category === ts.DiagnosticCategory.Error);
+    assert.equal(errors.length, 0, `${path} syntax diagnostics: ${errors.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n')).join(' | ')}`);
+  }
+});
 
 test('all AutoComplete hardening schedules delegate through governed wrapper', () => {
   for (const path of schedulerFiles) {
