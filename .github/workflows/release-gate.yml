@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: release-gate-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
