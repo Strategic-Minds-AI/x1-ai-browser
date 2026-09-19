@@ -7,9 +7,7 @@ import { useTheme } from "next-themes";
 import NotificationBell from "@/components/NotificationBell";
 import StartHereHandoff from "@/components/StartHereHandoff";
 import CommandPalette from "@/components/CommandPalette";
-import CopilotPanel from "@/components/copilot/CopilotPanel";
 import { Image } from "@/components/ui/image";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/lib/AuthContext";
 
 function ThemeToggle() {
@@ -157,7 +155,7 @@ function NavLinks({ onNavigate }) {
   );
 }
 
-function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
+function SidebarContent({ onLogout }) {
   return (
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-6 border-b border-sidebar-border">
@@ -169,19 +167,15 @@ function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
       <div className="px-4 pt-4">
         <StartHereHandoff />
       </div>
-      {onToggleCopilot && (
-        <div className="px-4 pt-2">
-          <button
-            onClick={onToggleCopilot}
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors ${
-              copilotOpen ? "bg-primary text-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"
-            }`}
-          >
-            <Bot className="w-4 h-4" />
-            {copilotOpen ? "Hide Copilot" : "Copilot"}
-          </button>
-        </div>
-      )}
+      <div className="px-4 pt-2">
+        <Link
+          to="/xtreme-gpt"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition-colors text-sidebar-foreground hover:bg-sidebar-accent"
+        >
+          <Bot className="w-4 h-4" />
+          Xtreme GPT
+        </Link>
+      </div>
       <NavLinks />
       <div className="p-4 border-t border-sidebar-border space-y-1">
         <ThemeToggle />
@@ -199,8 +193,6 @@ function SidebarContent({ onLogout, onToggleCopilot, copilotOpen }) {
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [copilotOpen, setCopilotOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     await base44.auth.logout();
@@ -211,7 +203,7 @@ export default function Layout() {
     <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 border-r border-sidebar-border flex-col">
-        <SidebarContent onLogout={handleLogout} onToggleCopilot={() => setCopilotOpen(!copilotOpen)} copilotOpen={copilotOpen} />
+        <SidebarContent onLogout={handleLogout} />
       </aside>
 
       {/* Mobile drawer */}
@@ -232,9 +224,9 @@ export default function Layout() {
             <Image src="https://media.base44.com/images/public/6a837c8e995cc4824aabf594/62e5d6b9c_generated_image.png" alt="Xtreme Cloud Browser" className="w-7 h-7 shrink-0" fittingType="fit" />
             <span className="font-heading font-semibold">Xtreme Cloud Browser</span>
           </div>
-          <button onClick={() => setCopilotOpen(!copilotOpen)} className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
+          <Link to="/xtreme-gpt" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <Bot className="w-5 h-5" />
-          </button>
+          </Link>
           <Link to="/settings" className="p-1 text-sidebar-foreground hover:text-sidebar-primary">
             <SettingsIcon className="w-5 h-5" />
           </Link>
@@ -247,20 +239,6 @@ export default function Layout() {
           </div>
         </main>
       </div>
-
-      {/* Copilot panel - desktop inline (right side) */}
-      {copilotOpen && !isMobile && (
-        <aside className="hidden md:flex w-[340px] border-l border-sidebar-border shrink-0">
-          <CopilotPanel onClose={() => setCopilotOpen(false)} />
-        </aside>
-      )}
-
-      {/* Copilot panel - mobile drawer (right side) */}
-      <Sheet open={copilotOpen && isMobile} onOpenChange={setCopilotOpen}>
-        <SheetContent side="right" className="w-[340px] p-0">
-          <CopilotPanel onClose={() => setCopilotOpen(false)} />
-        </SheetContent>
-      </Sheet>
 
       <CommandPalette />
     </div>

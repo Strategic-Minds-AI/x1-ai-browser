@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles, Plus, Settings2, Trash2, Loader2, MessageSquare, Zap, Image as ImageIcon, Mic, Globe, Send, Square, Volume2, Copy, Check, User, Bot, ArrowUp, Search, PanelLeft, X } from "lucide-react";
+import { Sparkles, Plus, Settings2, Trash2, Loader2, MessageSquare, Zap, Image as ImageIcon, Mic, Globe, Send, Square, Volume2, Copy, Check, User, Bot, ArrowUp, PanelLeft, X } from "lucide-react";
 import { Image as ImgComponent } from "@/components/ui/image";
 
 const DEFAULT_SYSTEM_INSTRUCTIONS = `You are Xtreme GPT, the most powerful AI assistant ever built. You are powered by ChatGPT (GPT-5) and have access to the entire Xtreme Cloud Browser platform — an autonomous digital corporation that discovers problems, builds software, creates marketing, and generates revenue.
@@ -65,15 +65,15 @@ function MessageBubble({ message }) {
 
   return (
     <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
-      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isUser ? "bg-blue-500 text-white" : "bg-neutral-800 text-neutral-300"}`}>
+      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isUser ? "bg-blue-500 text-white" : "bg-neutral-200 text-neutral-600"}`}>
         {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
       </div>
       <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`rounded-2xl px-4 py-2.5 text-sm ${isUser ? "bg-blue-600 text-white" : "bg-neutral-800/80 text-neutral-100"}`}>
+        <div className={`rounded-2xl px-4 py-2.5 text-sm ${isUser ? "bg-blue-600 text-white" : "bg-neutral-100 text-neutral-800"}`}>
           {isImage && message.metadata?.image_url ? (
             <div className="space-y-2">
               <ImgComponent src={message.metadata.image_url} className="rounded-xl max-w-sm" fittingType="fit" />
-              {message.content && <p className="text-xs text-neutral-400 italic">{message.content}</p>}
+              {message.content && <p className="text-xs text-neutral-500 italic">{message.content}</p>}
             </div>
           ) : (
             <p className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</p>
@@ -82,15 +82,15 @@ function MessageBubble({ message }) {
         {audioUrl && <audio controls src={audioUrl} className="w-full max-w-sm h-8" />}
         {!isUser && !isImage && (
           <div className="flex items-center gap-1">
-            <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1 px-2 py-1 rounded transition-colors">
+            <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {loadingAudio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Volume2 className="w-3 h-3" />}
               {audioUrl ? "Playing" : "Read aloud"}
             </button>
-            <button onClick={copyText} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1 px-2 py-1 rounded transition-colors">
+            <button onClick={copyText} className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               {copied ? "Copied" : "Copy"}
             </button>
-            {message.model_used && <span className="text-xs text-neutral-600 px-2 py-1">{message.model_used}</span>}
+            {message.model_used && <span className="text-xs text-neutral-400 px-2 py-1">{message.model_used}</span>}
           </div>
         )}
       </div>
@@ -148,7 +148,7 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
   const sizeClasses = large ? "rounded-3xl" : "rounded-2xl";
 
   return (
-    <div className={`bg-neutral-900 border border-neutral-700/50 ${sizeClasses} overflow-hidden shadow-2xl`}>
+    <div className={`bg-white border border-neutral-300 ${sizeClasses} overflow-hidden shadow-lg`}>
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -157,26 +157,26 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
         disabled={disabled}
         rows={large ? 2 : 1}
         autoFocus={large}
-        className="w-full resize-none bg-transparent px-5 pt-4 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none max-h-48"
+        className="w-full resize-none bg-transparent px-5 pt-4 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none max-h-48"
         style={{ minHeight: large ? "56px" : "40px" }}
       />
       <div className="flex items-center justify-between px-3 pb-3 pt-1">
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setMode(mode === "chat" ? "image" : "chat")} className={`p-2 rounded-lg transition-colors ${mode === "image" ? "bg-blue-600 text-white" : "text-neutral-400 hover:bg-neutral-800"}`} title="Toggle image mode">
+          <button onClick={() => setMode(mode === "chat" ? "image" : "chat")} className={`p-2 rounded-lg transition-colors ${mode === "image" ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-100"}`} title="Toggle image mode">
             <ImageIcon className="w-4 h-4" />
           </button>
-          <button onClick={() => onWebSearchChange(!webSearch)} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${webSearch ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" : "text-neutral-400 hover:bg-neutral-800"}`} title="Web search (Gemini models only)">
+          <button onClick={() => onWebSearchChange(!webSearch)} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${webSearch ? "bg-blue-50 text-blue-600 border border-blue-600/30" : "text-neutral-500 hover:bg-neutral-100"}`} title="Web search (Gemini models only)">
             <Globe className="w-3.5 h-3.5" /> Web
           </button>
-          <select value={selectedModel} onChange={(e) => onModelChange(e.target.value)} className="text-xs rounded-lg bg-neutral-800 text-neutral-300 border border-neutral-700 px-2 py-1.5 focus:outline-none cursor-pointer">
+          <select value={selectedModel} onChange={(e) => onModelChange(e.target.value)} className="text-xs rounded-lg bg-neutral-100 text-neutral-700 border border-neutral-300 px-2 py-1.5 focus:outline-none cursor-pointer">
             {MODELS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-1.5">
-          <button onClick={recording ? stopRecording : startRecording} disabled={disabled || transcribing} className={`p-2 rounded-lg transition-colors ${recording ? "bg-red-500 text-white animate-pulse" : "text-neutral-400 hover:bg-neutral-800"}`} title="Voice input">
+          <button onClick={recording ? stopRecording : startRecording} disabled={disabled || transcribing} className={`p-2 rounded-lg transition-colors ${recording ? "bg-red-500 text-white animate-pulse" : "text-neutral-500 hover:bg-neutral-100"}`} title="Voice input">
             {transcribing ? <Loader2 className="w-4 h-4 animate-spin" /> : recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
-          <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-blue-500 disabled:bg-neutral-700 disabled:text-neutral-500 disabled:cursor-not-allowed">
+          <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-blue-500 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed">
             {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
           </button>
         </div>
@@ -293,38 +293,35 @@ export default function XtremeGPT() {
 
   const Sidebar = () => (
     <>
-      {/* Header */}
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-sm text-neutral-200">Xtreme GPT</span>
+          <span className="font-semibold text-sm text-neutral-900">Xtreme GPT</span>
         </div>
-        <button onClick={() => setSidebarOpen(false)} className="md:hidden text-neutral-500 hover:text-neutral-300 p-1">
+        <button onClick={() => setSidebarOpen(false)} className="md:hidden text-neutral-400 hover:text-neutral-600 p-1">
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* New chat */}
       <div className="px-3 pb-2">
-        <button onClick={createConversation} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-700 text-sm text-neutral-300 hover:bg-neutral-800/50 transition-colors">
+        <button onClick={createConversation} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
           <Plus className="w-4 h-4" /> New chat
         </button>
       </div>
 
-      {/* Conversations */}
       <div className="flex-1 overflow-auto px-2 py-2 space-y-0.5">
         {loading ? (
-          <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-neutral-600" /></div>
+          <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-neutral-400" /></div>
         ) : conversations.length === 0 ? (
-          <p className="text-xs text-neutral-600 text-center p-4">No conversations yet</p>
+          <p className="text-xs text-neutral-400 text-center p-4">No conversations yet</p>
         ) : (
           conversations.map((c) => (
-            <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-800 text-neutral-100" : "text-neutral-400 hover:bg-neutral-800/50"}`}>
+            <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-200 text-neutral-900" : "text-neutral-600 hover:bg-neutral-100"}`}>
               <MessageSquare className="w-3.5 h-3.5 shrink-0" />
               <span className="text-sm truncate flex-1">{c.messages[0]?.content?.substring(0, 28) || "New chat"}</span>
-              <button onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-400 transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>
@@ -332,21 +329,20 @@ export default function XtremeGPT() {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-2 border-t border-neutral-800/50">
+      <div className="p-2 border-t border-neutral-200">
         <Sheet open={instructionsOpen} onOpenChange={setInstructionsOpen}>
           <SheetTrigger asChild>
-            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-400 hover:bg-neutral-800/50 transition-colors">
+            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors">
               <Settings2 className="w-4 h-4" /> System Instructions
             </button>
           </SheetTrigger>
-          <SheetContent className="w-[500px] sm:w-[540px] overflow-auto bg-neutral-900 border-neutral-800">
-            <SheetHeader><SheetTitle className="text-neutral-100">System Instructions</SheetTitle></SheetHeader>
+          <SheetContent className="w-[500px] sm:w-[540px] overflow-auto bg-white border-neutral-200">
+            <SheetHeader><SheetTitle className="text-neutral-900">System Instructions</SheetTitle></SheetHeader>
             <div className="p-4 space-y-4">
-              <p className="text-sm text-neutral-400">These instructions control how Xtreme GPT behaves. Edit them to customize the AI's personality, capabilities, and rules.</p>
-              <textarea value={systemInstructions} onChange={(e) => setSystemInstructions(e.target.value)} rows={20} className="w-full rounded-lg bg-neutral-800 border border-neutral-700 p-3 text-sm text-neutral-200 font-mono resize-y focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <p className="text-sm text-neutral-500">These instructions control how Xtreme GPT behaves. Edit them to customize the AI's personality, capabilities, and rules.</p>
+              <textarea value={systemInstructions} onChange={(e) => setSystemInstructions(e.target.value)} rows={20} className="w-full rounded-lg bg-neutral-50 border border-neutral-300 p-3 text-sm text-neutral-800 font-mono resize-y focus:outline-none focus:ring-1 focus:ring-blue-500" />
               <div className="flex gap-2">
-                <button onClick={() => setSystemInstructions(DEFAULT_SYSTEM_INSTRUCTIONS)} className="px-3 py-1.5 rounded-lg text-sm border border-neutral-700 text-neutral-300 hover:bg-neutral-800">Reset</button>
+                <button onClick={() => setSystemInstructions(DEFAULT_SYSTEM_INSTRUCTIONS)} className="px-3 py-1.5 rounded-lg text-sm border border-neutral-300 text-neutral-700 hover:bg-neutral-100">Reset</button>
                 <button onClick={() => setInstructionsOpen(false)} className="px-3 py-1.5 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-500">Save & Close</button>
               </div>
             </div>
@@ -357,49 +353,42 @@ export default function XtremeGPT() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)] bg-black rounded-xl overflow-hidden border border-neutral-800/50">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 flex-col bg-neutral-950 border-r border-neutral-800/50">
+    <div className="flex h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)] bg-white rounded-xl overflow-hidden border border-neutral-200">
+      <aside className="hidden md:flex w-64 flex-col bg-neutral-50 border-r border-neutral-200">
         <Sidebar />
       </aside>
 
-      {/* Mobile sidebar */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="w-64 flex-col bg-neutral-950 border-r border-neutral-800 flex h-full">
+          <div className="w-64 flex-col bg-neutral-50 border-r border-neutral-200 flex h-full">
             <Sidebar />
           </div>
-          <div className="flex-1 bg-black/60" onClick={() => setSidebarOpen(false)} />
+          <div className="flex-1 bg-black/40" onClick={() => setSidebarOpen(false)} />
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800/30">
-          <button onClick={() => setSidebarOpen(true)} className="md:hidden text-neutral-400 hover:text-neutral-200 p-1">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200">
+          <button onClick={() => setSidebarOpen(true)} className="md:hidden text-neutral-500 hover:text-neutral-700 p-1">
             <PanelLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-400">{MODELS.find((m) => m.value === selectedModel)?.label || "Auto"}</span>
-            {webSearch && <span className="text-xs text-blue-400 flex items-center gap-1"><Globe className="w-3 h-3" /> Web</span>}
+            <span className="text-sm text-neutral-500">{MODELS.find((m) => m.value === selectedModel)?.label || "Auto"}</span>
+            {webSearch && <span className="text-xs text-blue-600 flex items-center gap-1"><Globe className="w-3 h-3" /> Web</span>}
           </div>
           <div className="w-8" />
         </div>
 
-        {/* Content */}
         {!activeId ? (
-          // Welcome / landing screen
           <div className="flex-1 flex flex-col items-center justify-center px-4 overflow-auto">
             <div className="w-full max-w-2xl flex flex-col items-center">
-              <h1 className="text-3xl md:text-4xl font-semibold text-neutral-100 mb-8 text-center">What can I help with?</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900 mb-8 text-center">What can I help with?</h1>
               <div className="w-full">
                 <ChatInput onSend={handleSend} onGenerateImage={handleGenerateImage} onTranscribe={handleTranscribe} disabled={busy} selectedModel={selectedModel} onModelChange={setSelectedModel} webSearch={webSearch} onWebSearchChange={setWebSearch} mode={mode} setMode={setMode} large />
               </div>
-              {/* Suggestions */}
               <div className="w-full mt-6 space-y-1">
                 {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => { createConversation(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 transition-colors text-left">
+                  <button key={i} onClick={() => { createConversation(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors text-left">
                     <span className="text-base">{s.icon}</span>
                     {s.text}
                   </button>
@@ -408,24 +397,23 @@ export default function XtremeGPT() {
             </div>
           </div>
         ) : (
-          // Active conversation
           <>
             <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-6">
               <div className="max-w-3xl mx-auto space-y-6">
                 {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-neutral-500">
+                  <div className="flex flex-col items-center justify-center h-full text-center text-neutral-400">
                     <p className="text-sm">Send a message to start the conversation.</p>
                   </div>
                 ) : (
                   <>
                     {messages.map((m, i) => <MessageBubble key={m.id || i} message={m} />)}
-                    {busy && <div className="flex items-center gap-2 text-sm text-neutral-500"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
+                    {busy && <div className="flex items-center gap-2 text-sm text-neutral-400"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
                   </>
                 )}
               </div>
             </div>
-            {error && <div className="px-4 py-2 bg-red-950/50 text-red-400 text-sm border-t border-red-900/30">{error}</div>}
-            <div className="px-4 py-3 border-t border-neutral-800/30">
+            {error && <div className="px-4 py-2 bg-red-50 text-red-600 text-sm border-t border-red-200">{error}</div>}
+            <div className="px-4 py-3 border-t border-neutral-200">
               <div className="max-w-3xl mx-auto">
                 <ChatInput onSend={handleSend} onGenerateImage={handleGenerateImage} onTranscribe={handleTranscribe} disabled={busy} selectedModel={selectedModel} onModelChange={setSelectedModel} webSearch={webSearch} onWebSearchChange={setWebSearch} mode={mode} setMode={setMode} />
               </div>
