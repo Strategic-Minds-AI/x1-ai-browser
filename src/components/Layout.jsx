@@ -87,6 +87,7 @@ const workflowSteps = [
       { to: "/architecture", label: "Architecture", icon: Building2 },
       { to: "/autocomplete", label: "AutoComplete", icon: Activity },
       { to: "/operator-console", label: "Operator Console", icon: Terminal },
+      { to: "/autonomous-workflows", label: "Autonomous Workflows", icon: Activity },
       { to: "/mcp-creator", label: "Connect AI Tools", icon: Plug },
     ],
   },

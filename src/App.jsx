@@ -48,6 +48,7 @@ import Connect from '@/pages/Connect';
 import KeywordIntelligence from '@/pages/KeywordIntelligence';
 import AutoComplete from '@/pages/AutoComplete';
 import OperatorConsole from '@/pages/OperatorConsole';
+import AutonomousWorkflows from '@/pages/AutonomousWorkflows';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -110,6 +111,7 @@ const AuthenticatedApp = () => {
           <Route path="/architecture" element={<Architecture />} />
           <Route path="/autocomplete" element={<AutoComplete />} />
           <Route path="/operator-console" element={<OperatorConsole />} />
+          <Route path="/autonomous-workflows" element={<AutonomousWorkflows />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />
