@@ -50,6 +50,7 @@ import AutoComplete from '@/pages/AutoComplete';
 import OperatorConsole from '@/pages/OperatorConsole';
 import AutonomousWorkflows from '@/pages/AutonomousWorkflows';
 import DreamFactory from '@/pages/DreamFactory';
+import ChatShell from '@/pages/ChatShell';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -114,6 +115,7 @@ const AuthenticatedApp = () => {
           <Route path="/operator-console" element={<OperatorConsole />} />
           <Route path="/autonomous-workflows" element={<AutonomousWorkflows />} />
           <Route path="/dream-factory" element={<DreamFactory />} />
+          <Route path="/chat-shell" element={<ChatShell />} />
           <Route path="/auto-recommender" element={<AutoRecommender />} />
           <Route path="/account" element={<Account />} />
           <Route path="/connect" element={<Connect />} />

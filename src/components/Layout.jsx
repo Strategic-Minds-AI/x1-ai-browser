@@ -35,6 +35,7 @@ const workflowSteps = [
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/dream-factory", label: "Dream Factory", icon: Sparkles },
+      { to: "/chat-shell", label: "AI Shell", icon: Bot },
       { to: "/welcome", label: "Onboarding", icon: Rocket },
     ],
   },
