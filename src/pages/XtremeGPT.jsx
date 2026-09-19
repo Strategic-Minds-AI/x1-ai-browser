@@ -1,42 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles, Plus, Settings2, Trash2, Loader2, MessageSquare, Zap, Image as ImageIcon, Mic, Globe, Send, Square, Volume2, Copy, Check, User, Bot, ArrowUp, PanelLeft, X } from "lucide-react";
+import { Plus, Trash2, Loader2, MessageSquare, Zap, Mic, Square, Volume2, Copy, Check, User, Bot, ArrowUp, PanelLeft, X, Sparkles } from "lucide-react";
 import { Image as ImgComponent } from "@/components/ui/image";
 
-const DEFAULT_SYSTEM_INSTRUCTIONS = `You are Xtreme GPT, the most powerful AI assistant ever built. You are powered by ChatGPT (GPT-5) and have access to the entire Xtreme Cloud Browser platform — an autonomous digital corporation that discovers problems, builds software, creates marketing, and generates revenue.
-
-Your capabilities:
-- Generate product ideas from market trends and online complaints
-- Architect complete software systems for any idea
-- Create content at scale (blogs, social posts, ad copy, video scripts)
-- Design omnichannel marketing campaigns
-- Browse the web, scrape data, and extract intelligence
-- Generate AI images from text descriptions
-- Speak and listen using voice (text-to-speech and speech-to-text)
-- Manage infrastructure (Railway, GitHub, Vercel)
-- Run autonomous workflows and self-healing loops
-- Communicate with the Vision Cortex Brain for strategic guidance
-
-When the user asks you to DO something (not just chat), describe the action clearly and suggest which backend function or page to use. Be proactive, concise, and action-oriented. When uncertain, ask a clarifying question. Always think about how to make the user's digital corporation more autonomous and profitable.
-
-You are Xtreme GPT — the ultimate AI shell for the Xtreme platform.`;
-
-const MODELS = [
-  { value: "automatic", label: "Auto" },
-  { value: "gpt_5_mini", label: "GPT-5 Mini" },
-  { value: "gpt_5_4", label: "GPT-5.4 (smart)" },
-  { value: "gpt_5_6_sol", label: "GPT-5.6 Sol" },
-  { value: "gpt_5_6_luna", label: "GPT-5.6 Luna" },
-  { value: "gemini_3_flash", label: "Gemini 3 Flash" },
-  { value: "gemini_3_1_pro", label: "Gemini 3.1 Pro" },
-  { value: "claude_sonnet_4_6", label: "Claude Sonnet 4.6" },
-  { value: "claude-sonnet-5", label: "Claude Sonnet 5" },
-  { value: "claude_opus_4_8", label: "Claude Opus 4.8" },
-  { value: "claude_opus_5", label: "Claude Opus 5" },
-];
-
-const WEB_SEARCH_MODELS = ["gemini_3_flash", "gemini_3_1_pro"];
+const AGENT_NAME = "autonomous_agent";
+const agentsApi = /** @type {any} */ (base44).agents;
 
 const SUGGESTIONS = [
   { icon: "🚀", text: "Generate product ideas from today's Google trends" },
@@ -50,7 +18,8 @@ function MessageBubble({ message }) {
   const [loadingAudio, setLoadingAudio] = useState(false);
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
-  const isImage = message.metadata?.type === "image";
+  const isImage = message.metadata?.type === "image" || !!message.image_url;
+  const imageUrl = message.metadata?.image_url || message.image_url;
 
   const readAloud = async () => {
     setLoadingAudio(true);
@@ -70,9 +39,9 @@ function MessageBubble({ message }) {
       </div>
       <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
         <div className={`rounded-2xl px-4 py-2.5 text-sm ${isUser ? "bg-blue-600 text-white" : "bg-neutral-100 text-neutral-800"}`}>
-          {isImage && message.metadata?.image_url ? (
+          {isImage && imageUrl ? (
             <div className="space-y-2">
-              <ImgComponent src={message.metadata.image_url} className="rounded-xl max-w-sm" fittingType="fit" />
+              <ImgComponent src={imageUrl} className="rounded-xl max-w-sm" fittingType="fit" />
               {message.content && <p className="text-xs text-neutral-500 italic">{message.content}</p>}
             </div>
           ) : (
@@ -80,7 +49,7 @@ function MessageBubble({ message }) {
           )}
         </div>
         {audioUrl && <audio controls src={audioUrl} className="w-full max-w-sm h-8" />}
-        {!isUser && !isImage && (
+        {!isUser && !isImage && message.content && (
           <div className="flex items-center gap-1">
             <button onClick={readAloud} disabled={loadingAudio} className="text-xs text-neutral-400 hover:text-neutral-600 flex items-center gap-1 px-2 py-1 rounded transition-colors">
               {loadingAudio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Volume2 className="w-3 h-3" />}
@@ -90,7 +59,6 @@ function MessageBubble({ message }) {
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               {copied ? "Copied" : "Copy"}
             </button>
-            {message.model_used && <span className="text-xs text-neutral-400 px-2 py-1">{message.model_used}</span>}
           </div>
         )}
       </div>
@@ -98,7 +66,7 @@ function MessageBubble({ message }) {
   );
 }
 
-function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedModel, onModelChange, webSearch, onWebSearchChange, mode, setMode, large }) {
+function ChatInput({ onSend, onTranscribe, disabled, large }) {
   const [text, setText] = useState("");
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
@@ -107,8 +75,7 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
 
   const handleSend = () => {
     if (!text.trim() || disabled) return;
-    if (mode === "image") onGenerateImage(text.trim());
-    else onSend(text.trim(), { model: selectedModel, webSearch });
+    onSend(text.trim());
     setText("");
   };
 
@@ -127,7 +94,7 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
         try {
           const blob = new Blob(chunksRef.current, { type: "audio/webm" });
           const file = new File([blob], "voice.webm", { type: "audio/webm" });
-          await onTranscribe(file, (t) => { setText(t); setMode("chat"); });
+          await onTranscribe(file, (t) => setText(t));
         } catch (err) { alert("Transcription failed: " + err.message); }
         finally { setTranscribing(false); }
       };
@@ -153,7 +120,7 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={mode === "image" ? "Describe the image you want to generate..." : "Message Xtreme GPT..."}
+        placeholder="Message Xtreme GPT..."
         disabled={disabled}
         rows={large ? 2 : 1}
         autoFocus={large}
@@ -162,24 +129,13 @@ function ChatInput({ onSend, onGenerateImage, onTranscribe, disabled, selectedMo
       />
       <div className="flex items-center justify-between px-3 pb-3 pt-1">
         <div className="flex items-center gap-1.5">
-          <button onClick={() => setMode(mode === "chat" ? "image" : "chat")} className={`p-2 rounded-lg transition-colors ${mode === "image" ? "bg-blue-600 text-white" : "text-neutral-500 hover:bg-neutral-100"}`} title="Toggle image mode">
-            <ImageIcon className="w-4 h-4" />
-          </button>
-          <button onClick={() => onWebSearchChange(!webSearch)} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${webSearch ? "bg-blue-50 text-blue-600 border border-blue-600/30" : "text-neutral-500 hover:bg-neutral-100"}`} title="Web search (Gemini models only)">
-            <Globe className="w-3.5 h-3.5" /> Web
-          </button>
-          <select value={selectedModel} onChange={(e) => onModelChange(e.target.value)} className="text-xs rounded-lg bg-neutral-100 text-neutral-700 border border-neutral-300 px-2 py-1.5 focus:outline-none cursor-pointer">
-            {MODELS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
-        </div>
-        <div className="flex items-center gap-1.5">
           <button onClick={recording ? stopRecording : startRecording} disabled={disabled || transcribing} className={`p-2 rounded-lg transition-colors ${recording ? "bg-red-500 text-white animate-pulse" : "text-neutral-500 hover:bg-neutral-100"}`} title="Voice input">
             {transcribing ? <Loader2 className="w-4 h-4 animate-spin" /> : recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
-          <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-blue-500 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed">
-            {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
-          </button>
         </div>
+        <button onClick={handleSend} disabled={!text.trim() || disabled} className="w-9 h-9 rounded-full flex items-center justify-center transition-all bg-blue-600 text-white hover:bg-blue-500 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed">
+          {disabled ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   );
@@ -190,97 +146,63 @@ export default function XtremeGPT() {
   const [activeId, setActiveId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("xtremegpt_model") || "gpt_5_4");
-  const [webSearch, setWebSearch] = useState(false);
-  const [mode, setMode] = useState("chat");
-  const [systemInstructions, setSystemInstructions] = useState(() => localStorage.getItem("xtremegpt_system") || DEFAULT_SYSTEM_INSTRUCTIONS);
-  const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef(null);
-  const entityApi = base44.entities.CopilotMessage;
 
-  const loadConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async () => {
     try {
-      const allMsgs = await entityApi.list("-created_date", 200);
-      const convos = {};
-      for (const m of allMsgs || []) {
-        const cid = m.conversation_id || "default";
-        if (!convos[cid]) convos[cid] = { id: cid, messages: [], last_at: m.created_date };
-        convos[cid].messages.push(m);
-        if (m.created_date > convos[cid].last_at) convos[cid].last_at = m.created_date;
-      }
-      setConversations(Object.values(convos).sort((a, b) => (b.last_at || "").localeCompare(a.last_at || "")));
-    } catch (e) { console.error("Conversation load error:", e); }
-    finally { setLoading(false); }
-  }, [entityApi]);
+      const list = await agentsApi.listConversations({ agent_name: AGENT_NAME });
+      setConversations(list || []);
+    } catch { setConversations([]); }
+    setLoading(false);
+  }, []);
 
-  useEffect(() => { loadConversations(); }, [loadConversations]);
+  useEffect(() => { fetchConversations(); }, [fetchConversations]);
 
   useEffect(() => {
     if (!activeId) { setMessages([]); return; }
-    const conv = conversations.find((c) => c.id === activeId);
-    if (conv) setMessages(conv.messages.sort((a, b) => (a.created_date || "").localeCompare(b.created_date || "")));
-  }, [activeId, conversations]);
+    setSending(false);
+    let unsub = () => {};
+    (async () => {
+      try {
+        const conv = await agentsApi.getConversation(activeId);
+        setMessages(conv.messages || []);
+        unsub = agentsApi.subscribeToConversation(activeId, (data) => {
+          setMessages(data.messages || []);
+          setSending(false);
+        });
+      } catch { setMessages([]); }
+    })();
+    return () => unsub();
+  }, [activeId]);
 
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, busy]);
-  useEffect(() => { localStorage.setItem("xtremegpt_model", selectedModel); }, [selectedModel]);
-  useEffect(() => { localStorage.setItem("xtremegpt_system", systemInstructions); }, [systemInstructions]);
-  useEffect(() => { if (webSearch && !WEB_SEARCH_MODELS.includes(selectedModel)) setSelectedModel("gemini_3_flash"); }, [webSearch]);
+  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages, sending]);
 
-  const createConversation = () => {
-    const id = `conv_${Date.now()}`;
-    setConversations([{ id, messages: [], last_at: new Date().toISOString() }, ...conversations]);
-    setActiveId(id);
-    setMessages([]);
-    setSidebarOpen(false);
-  };
-
-  const deleteConversation = async (id) => {
-    try { const msgs = await entityApi.filter({ conversation_id: id }); for (const m of msgs) await entityApi.delete(m.id); } catch (e) {}
-    setConversations(conversations.filter((c) => c.id !== id));
-    if (activeId === id) setActiveId(null);
-    loadConversations();
-  };
-
-  const addMessage = async (msg) => {
+  const handleCreate = async () => {
     try {
-      const created = await entityApi.create({ ...msg, conversation_id: activeId, source: "ui", created_date: new Date().toISOString() });
-      setMessages((prev) => [...prev, created]);
-      return created;
-    } catch (e) {
-      const local = { ...msg, id: `local_${Date.now()}`, conversation_id: activeId, created_date: new Date().toISOString() };
-      setMessages((prev) => [...prev, local]);
-      return local;
+      const conv = await agentsApi.createConversation({
+        agent_name: AGENT_NAME,
+        metadata: { name: `Chat ${conversations.length + 1}`, description: "Xtreme GPT conversation" },
+      });
+      setConversations([conv, ...conversations]);
+      setActiveId(conv.id);
+      setSidebarOpen(false);
+    } catch (err) { setError(err.message); }
+  };
+
+  const handleSend = async (text) => {
+    if (!activeId) { handleCreate(); return; }
+    setSending(true);
+    setError("");
+    try {
+      const conv = conversations.find((c) => c.id === activeId);
+      await agentsApi.addMessage(conv, { role: "user", content: text });
+    } catch (err) {
+      setError(err.message);
+      setSending(false);
     }
-  };
-
-  const handleSend = async (text, opts) => {
-    if (!activeId) { createConversation(); return; }
-    setBusy(true); setError("");
-    try {
-      await addMessage({ role: "user", content: text, model_used: opts.model });
-      const historyText = messages.map((m) => `${m.role}: ${m.content}`).join("\n\n");
-      const prompt = `${systemInstructions}\n\n--- Conversation history ---\n${historyText}\n\n--- New message ---\n${text}\n\nRespond as Xtreme GPT. Be helpful, concise, and action-oriented.`;
-      const res = await base44.integrations.Core.InvokeLLM({ prompt, model: opts.webSearch ? "gemini_3_flash" : opts.model, add_context_from_internet: opts.webSearch });
-      const responseText = typeof res === "string" ? res : (res?.text || JSON.stringify(res));
-      await addMessage({ role: "assistant", content: responseText, model_used: opts.webSearch ? "gemini_3_flash" : opts.model, metadata: { web_search: opts.webSearch } });
-      loadConversations();
-    } catch (e) { setError(e.message); }
-    finally { setBusy(false); }
-  };
-
-  const handleGenerateImage = async (prompt) => {
-    if (!activeId) { createConversation(); return; }
-    setBusy(true); setError("");
-    try {
-      await addMessage({ role: "user", content: prompt, metadata: { type: "image_prompt" } });
-      const res = await base44.integrations.Core.GenerateImage({ prompt });
-      await addMessage({ role: "assistant", content: `Generated image for: "${prompt}"`, metadata: { type: "image", image_url: res?.url || res } });
-      loadConversations();
-    } catch (e) { setError(e.message); }
-    finally { setBusy(false); }
   };
 
   const handleTranscribe = async (file, callback) => {
@@ -289,6 +211,14 @@ export default function XtremeGPT() {
       const res = await base44.integrations.Core.TranscribeAudio({ audio_url: file_url });
       callback(typeof res === "string" ? res : (res?.text || ""));
     } catch (e) { setError("Transcription failed: " + e.message); callback(""); }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await agentsApi.updateConversation(id, { metadata: { archived: true } });
+      setConversations(conversations.filter((c) => c.id !== id));
+      if (activeId === id) setActiveId(null);
+    } catch { /* ignore */ }
   };
 
   const Sidebar = () => (
@@ -306,7 +236,7 @@ export default function XtremeGPT() {
       </div>
 
       <div className="px-3 pb-2">
-        <button onClick={createConversation} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
+        <button onClick={handleCreate} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-300 text-sm text-neutral-700 hover:bg-neutral-100 transition-colors">
           <Plus className="w-4 h-4" /> New chat
         </button>
       </div>
@@ -320,34 +250,13 @@ export default function XtremeGPT() {
           conversations.map((c) => (
             <div key={c.id} onClick={() => { setActiveId(c.id); setSidebarOpen(false); }} className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${activeId === c.id ? "bg-neutral-200 text-neutral-900" : "text-neutral-600 hover:bg-neutral-100"}`}>
               <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-sm truncate flex-1">{c.messages[0]?.content?.substring(0, 28) || "New chat"}</span>
-              <button onClick={(e) => { e.stopPropagation(); deleteConversation(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-colors">
+              <span className="text-sm truncate flex-1">{c.metadata?.name || c.messages?.[0]?.content?.substring(0, 28) || "New chat"}</span>
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-500 transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
             </div>
           ))
         )}
-      </div>
-
-      <div className="p-2 border-t border-neutral-200">
-        <Sheet open={instructionsOpen} onOpenChange={setInstructionsOpen}>
-          <SheetTrigger asChild>
-            <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors">
-              <Settings2 className="w-4 h-4" /> System Instructions
-            </button>
-          </SheetTrigger>
-          <SheetContent className="w-[500px] sm:w-[540px] overflow-auto bg-white border-neutral-200">
-            <SheetHeader><SheetTitle className="text-neutral-900">System Instructions</SheetTitle></SheetHeader>
-            <div className="p-4 space-y-4">
-              <p className="text-sm text-neutral-500">These instructions control how Xtreme GPT behaves. Edit them to customize the AI's personality, capabilities, and rules.</p>
-              <textarea value={systemInstructions} onChange={(e) => setSystemInstructions(e.target.value)} rows={20} className="w-full rounded-lg bg-neutral-50 border border-neutral-300 p-3 text-sm text-neutral-800 font-mono resize-y focus:outline-none focus:ring-1 focus:ring-blue-500" />
-              <div className="flex gap-2">
-                <button onClick={() => setSystemInstructions(DEFAULT_SYSTEM_INSTRUCTIONS)} className="px-3 py-1.5 rounded-lg text-sm border border-neutral-300 text-neutral-700 hover:bg-neutral-100">Reset</button>
-                <button onClick={() => setInstructionsOpen(false)} className="px-3 py-1.5 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-500">Save & Close</button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
     </>
   );
@@ -373,8 +282,8 @@ export default function XtremeGPT() {
             <PanelLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500">{MODELS.find((m) => m.value === selectedModel)?.label || "Auto"}</span>
-            {webSearch && <span className="text-xs text-blue-600 flex items-center gap-1"><Globe className="w-3 h-3" /> Web</span>}
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            <span className="text-sm text-neutral-500">Autonomous Agent · GPT-5</span>
           </div>
           <div className="w-8" />
         </div>
@@ -384,11 +293,11 @@ export default function XtremeGPT() {
             <div className="w-full max-w-2xl flex flex-col items-center">
               <h1 className="text-3xl md:text-4xl font-semibold text-neutral-900 mb-8 text-center">What can I help with?</h1>
               <div className="w-full">
-                <ChatInput onSend={handleSend} onGenerateImage={handleGenerateImage} onTranscribe={handleTranscribe} disabled={busy} selectedModel={selectedModel} onModelChange={setSelectedModel} webSearch={webSearch} onWebSearchChange={setWebSearch} mode={mode} setMode={setMode} large />
+                <ChatInput onSend={handleSend} onTranscribe={handleTranscribe} disabled={sending} large />
               </div>
               <div className="w-full mt-6 space-y-1">
                 {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => { createConversation(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors text-left">
+                  <button key={i} onClick={() => { handleCreate(); }} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors text-left">
                     <span className="text-base">{s.icon}</span>
                     {s.text}
                   </button>
@@ -402,12 +311,12 @@ export default function XtremeGPT() {
               <div className="max-w-3xl mx-auto space-y-6">
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-neutral-400">
-                    <p className="text-sm">Send a message to start the conversation.</p>
+                    <p className="text-sm">Send a message to start. The agent can browse the web, run jobs, manage infra, and more.</p>
                   </div>
                 ) : (
                   <>
-                    {messages.map((m, i) => <MessageBubble key={m.id || i} message={m} />)}
-                    {busy && <div className="flex items-center gap-2 text-sm text-neutral-400"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
+                    {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+                    {sending && <div className="flex items-center gap-2 text-sm text-neutral-400"><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</div>}
                   </>
                 )}
               </div>
@@ -415,7 +324,7 @@ export default function XtremeGPT() {
             {error && <div className="px-4 py-2 bg-red-50 text-red-600 text-sm border-t border-red-200">{error}</div>}
             <div className="px-4 py-3 border-t border-neutral-200">
               <div className="max-w-3xl mx-auto">
-                <ChatInput onSend={handleSend} onGenerateImage={handleGenerateImage} onTranscribe={handleTranscribe} disabled={busy} selectedModel={selectedModel} onModelChange={setSelectedModel} webSearch={webSearch} onWebSearchChange={setWebSearch} mode={mode} setMode={setMode} />
+                <ChatInput onSend={handleSend} onTranscribe={handleTranscribe} disabled={sending} />
               </div>
             </div>
           </>
