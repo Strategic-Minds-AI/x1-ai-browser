@@ -219,9 +219,9 @@ Respond as Xtreme GPT. Be helpful, concise, and action-oriented.`;
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)] -m-4 md:-m-8">
+    <div className="flex h-[calc(100vh-6rem)] md:h-[calc(100vh-4rem)] rounded-xl border overflow-hidden bg-card">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-64 border-r flex-col bg-card">
+      <aside className="hidden md:flex w-64 border-r flex-col">
         <div className="p-3 border-b">
           <Button onClick={createConversation} className="w-full gap-2">
             <Plus className="w-4 h-4" /> New Chat
