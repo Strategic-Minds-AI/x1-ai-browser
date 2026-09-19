@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lightbulb, Rocket, PenSquare, Megaphone, Building2, Share2, Moon, Activity, TrendingUp, DollarSign, Eye, Sparkles, Loader2, Brain, Target } from "lucide-react";
+import { Lightbulb, Rocket, PenSquare, Megaphone, Building2, Share2, Moon, Activity, TrendingUp, DollarSign, Eye, Sparkles, Loader2, Brain, Target, Flame, AlertTriangle, Crosshair, KeyRound, Users, Swords, Search } from "lucide-react";
 
 export default function DreamFactory() {
   const [factory, setFactory] = useState(null);
@@ -13,19 +13,22 @@ export default function DreamFactory() {
   const [campaigns, setCampaigns] = useState([]);
   const [corporation, setCorporation] = useState(null);
   const [socialAccounts, setSocialAccounts] = useState([]);
+  const [discoveries, setDiscoveries] = useState([]);
+  const [discoveryFilter, setDiscoveryFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [niche, setNiche] = useState("");
 
   const loadData = useCallback(async () => {
     try {
-      const [f, i, c, camps, corps, social] = await Promise.all([
+      const [f, i, c, camps, corps, social, disc] = await Promise.all([
         base44.entities.DreamFactory.list().catch(() => []),
         base44.entities.ProductIdea.list("-generated_date", 20).catch(() => []),
         base44.entities.ContentAsset.list("-generated_date", 20).catch(() => []),
         base44.entities.MarketingCampaign.list("-start_date", 10).catch(() => []),
         base44.entities.DigitalCorporation.list().catch(() => []),
-        base44.entities.SocialMediaAccount.list().catch(() => [])
+        base44.entities.SocialMediaAccount.list().catch(() => []),
+        base44.entities.DiscoveryResult.list("-generated_at", 100).catch(() => [])
       ]);
       setFactory(f[0] || null);
       setIdeas(i || []);
@@ -33,6 +36,7 @@ export default function DreamFactory() {
       setCampaigns(camps || []);
       setCorporation(corps[0] || null);
       setSocialAccounts(social || []);
+      setDiscoveries(disc || []);
     } catch (e) {
       console.error("DreamFactory load error:", e);
     } finally {
@@ -147,14 +151,138 @@ export default function DreamFactory() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="ideas" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
+      <Tabs defaultValue="discovery" className="w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
+          <TabsTrigger value="discovery" className="gap-1"><Search className="w-4 h-4" /> Discover</TabsTrigger>
           <TabsTrigger value="ideas" className="gap-1"><Lightbulb className="w-4 h-4" /> Ideas</TabsTrigger>
           <TabsTrigger value="content" className="gap-1"><PenSquare className="w-4 h-4" /> Content</TabsTrigger>
           <TabsTrigger value="marketing" className="gap-1"><Megaphone className="w-4 h-4" /> Marketing</TabsTrigger>
           <TabsTrigger value="corporation" className="gap-1"><Building2 className="w-4 h-4" /> Corporation</TabsTrigger>
           <TabsTrigger value="social" className="gap-1"><Share2 className="w-4 h-4" /> Social</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="discovery" className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { type: "trend", label: "Trends", icon: Flame, desc: "Rising search trends & viral topics" },
+              { type: "problem", label: "Problems", icon: AlertTriangle, desc: "Things people complain about" },
+              { type: "niche", label: "Niches", icon: Crosshair, desc: "Underserved profitable areas" },
+              { type: "keyword", label: "Keywords", icon: KeyRound, desc: "High-value SEO search terms" },
+              { type: "opportunity", label: "Opportunities", icon: Target, desc: "Market gaps to exploit" },
+              { type: "audience", label: "Audiences", icon: Users, desc: "Underserved user groups" },
+              { type: "competitor", label: "Competitors", icon: Swords, desc: "Weak competitors to beat" },
+            ].map((gen) => {
+              const Icon = gen.icon;
+              return (
+                <Card key={gen.type} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="font-medium text-sm">{gen.label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground flex-1">{gen.desc}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => runAction("runDiscoveryGenerator", { generator_type: gen.type, count: 10, niche: niche || undefined })}
+                      disabled={actionLoading === "runDiscoveryGenerator"}
+                      className="gap-1.5 w-full"
+                    >
+                      {actionLoading === "runDiscoveryGenerator" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                      Auto-Find {gen.label}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {discoveries.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap pt-2">
+                <span className="text-sm font-medium text-muted-foreground">Filter:</span>
+                <Button
+                  size="sm"
+                  variant={discoveryFilter === "all" ? "default" : "outline"}
+                  onClick={() => setDiscoveryFilter("all")}
+                >
+                  All ({discoveries.length})
+                </Button>
+                {["trend", "problem", "niche", "keyword", "opportunity", "audience", "competitor"].map((t) => {
+                  const count = discoveries.filter((d) => d.discovery_type === t).length;
+                  if (count === 0) return null;
+                  return (
+                    <Button
+                      key={t}
+                      size="sm"
+                      variant={discoveryFilter === t ? "default" : "outline"}
+                      onClick={() => setDiscoveryFilter(t)}
+                      className="capitalize"
+                    >
+                      {t}s ({count})
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-3">
+                {discoveries
+                  .filter((d) => discoveryFilter === "all" || d.discovery_type === discoveryFilter)
+                  .map((disc) => (
+                    <Card key={disc.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="secondary" className="capitalize">{disc.discovery_type}</Badge>
+                              {disc.trend_direction && (
+                                <Badge variant="outline" className="capitalize gap-1">
+                                  <TrendingUp className="w-3 h-3" /> {disc.trend_direction}
+                                </Badge>
+                              )}
+                              {disc.competition_level && (
+                                <Badge variant="outline" className="capitalize">Comp: {disc.competition_level}</Badge>
+                              )}
+                              {disc.monetization_potential && (
+                                <Badge variant="outline" className="capitalize">Money: {disc.monetization_potential}</Badge>
+                              )}
+                            </div>
+                            <h4 className="font-medium">{disc.title}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">{disc.description}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-2xl font-bold text-primary">{disc.score}</div>
+                            <div className="text-xs text-muted-foreground">score</div>
+                          </div>
+                        </div>
+                        {disc.search_keywords && disc.search_keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {disc.search_keywords.slice(0, 8).map((kw, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">{kw}</Badge>
+                            ))}
+                          </div>
+                        )}
+                        {disc.market_size && (
+                          <p className="text-xs text-muted-foreground mt-2"><strong>Market:</strong> {disc.market_size}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </>
+          )}
+
+          {discoveries.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <Search className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                No discoveries yet. Use the generators above to automatically find trends, problems, niches, keywords, opportunities, audiences, and competitors from across the web.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         <TabsContent value="ideas" className="space-y-4">
           <div className="flex gap-2 flex-wrap">
