@@ -27,6 +27,35 @@
           "destructive_hint": false,
           "idempotent_hint": false
         }
+      },
+      {
+        "name": "copilot_chat",
+        "title": "Chat through CloudBrowser Copilot",
+        "description": "Send messages to the CloudBrowser Copilot panel and receive AI responses powered by ChatGPT (GPT-5). Use action='send' with a message string to chat, action='receive' to read recent messages, or action='history' to get the full conversation. The Copilot panel displays these messages in real time. Responses are generated using GPT-5 with the full CloudBrowser system context.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "The relay action: 'send' (send a message and get a GPT-5 response), 'receive' (read recent messages), or 'history' (full conversation)"
+            },
+            "message": {
+              "type": "string",
+              "description": "The message text to send (required for 'send' action)"
+            },
+            "conversation_id": {
+              "type": "string",
+              "description": "Optional conversation ID for grouping messages (defaults to 'mcp_default')"
+            }
+          },
+          "required": ["action"]
+        },
+        "handler": "copilotRelay",
+        "annotations": {
+          "read_only_hint": false,
+          "destructive_hint": false,
+          "idempotent_hint": false
+        }
       }
     ]
   }

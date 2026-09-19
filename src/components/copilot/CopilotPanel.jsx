@@ -16,6 +16,7 @@ export default function CopilotPanel({ onClose }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [copilotMsgs, setCopilotMsgs] = useState([]);
   const scrollRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
@@ -55,6 +56,25 @@ export default function CopilotPanel({ onClose }) {
     })();
     return () => unsub();
   }, [activeId]);
+
+  // Poll for ChatGPT messages relayed via MCP
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const msgs = await base44.entities.CopilotMessage.list('-created_date', 20);
+        setCopilotMsgs(msgs || []);
+      } catch { setCopilotMsgs([]); }
+    };
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Merge agent messages with ChatGPT relay messages
+  const allMessages = [
+    ...messages.map(m => ({ ...m, source: m.source || 'agent' })),
+    ...copilotMsgs.map(m => ({ role: m.role, content: m.content, created_at: m.created_date, source: m.source || 'mcp' })),
+  ].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -111,7 +131,7 @@ export default function CopilotPanel({ onClose }) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">Copilot</p>
-            <p className="text-xs text-muted-foreground truncate">Autonomous Agent · Live Edit</p>
+            <p className="text-xs text-muted-foreground truncate">ChatGPT · GPT-5 · MCP Relay</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7 shrink-0">
@@ -136,14 +156,19 @@ export default function CopilotPanel({ onClose }) {
               <Sparkles className="w-3 h-3" /> Start Chatting
             </Button>
           </div>
-        ) : messages.length === 0 ? (
+        ) : allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <p className="text-xs text-muted-foreground">Send a message or pick a suggestion below. The agent can edit UI, run jobs, manage infrastructure, and more.</p>
           </div>
         ) : (
           <>
-            {messages.map((m, i) => (
-              <MessageBubble key={i} message={m} />
+            {allMessages.map((m, i) => (
+              <div key={i} className={m.source === 'mcp' ? 'border-l-2 border-primary pl-2' : ''}>
+                {m.source === 'mcp' && (
+                  <div className="text-[10px] text-primary font-semibold mb-0.5">via ChatGPT MCP</div>
+                )}
+                <MessageBubble message={m} />
+              </div>
             ))}
             {sending && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
