@@ -124,7 +124,7 @@ export default function ChatShellInput({ onSend, onGenerateImage, onTranscribe, 
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={mode === "image" ? "Describe the image you want to generate..." : "Message the Dream Factory AI..."}
+          placeholder={mode === "image" ? "Describe the image you want to generate..." : "Message Xtreme GPT..."}
           disabled={disabled}
           rows={1}
           className="flex-1 resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm max-h-32 focus:outline-none focus:ring-1 focus:ring-ring"
