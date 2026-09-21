@@ -69,10 +69,10 @@ const SCOPE_OPTIONS = [
 ];
 
 const PRESETS = [
-  { name: "Vision Cortex Operator", role: "vision_cortex", external_label: "XTREME_SCRAPER_VC_KEY", scopes: ["admin:all", "vision_cortex:operate"], functions: [], desc: "Full bidirectional autonomous control" },
-  { name: "Full Admin Access", role: "admin", external_label: "XTREME_SCRAPER_ADMIN_KEY", scopes: ["admin:all"], functions: [], desc: "Complete system access" },
-  { name: "Service Account", role: "service", external_label: "XTREME_SCRAPER_SVC_KEY", scopes: ["sessions:read", "sessions:write", "jobs:read", "jobs:write"], functions: ["runJob", "engineAction", "provisionSandbox"], desc: "Automated integrations" },
-  { name: "Standard User", role: "user", external_label: "XTREME_SCRAPER_USER_KEY", scopes: ["sessions:read", "sessions:write", "scrape:run"], functions: ["runJob"], desc: "Basic user access" },
+  { name: "Vision Cortex Operator", role: "vision_cortex", external_label: "X1_BROWSER_VC_KEY", scopes: ["admin:all", "vision_cortex:operate"], functions: [], desc: "Full bidirectional autonomous control" },
+  { name: "Full Admin Access", role: "admin", external_label: "X1_BROWSER_ADMIN_KEY", scopes: ["admin:all"], functions: [], desc: "Complete system access" },
+  { name: "Service Account", role: "service", external_label: "X1_BROWSER_SVC_KEY", scopes: ["sessions:read", "sessions:write", "jobs:read", "jobs:write"], functions: ["runJob", "engineAction", "provisionSandbox"], desc: "Automated integrations" },
+  { name: "Standard User", role: "user", external_label: "X1_BROWSER_USER_KEY", scopes: ["sessions:read", "sessions:write", "scrape:run"], functions: ["runJob"], desc: "Basic user access" },
 ];
 
 export default function AdminApiKeys() {
@@ -287,7 +287,7 @@ export default function AdminApiKeys() {
             <div className="space-y-2">
               <Label>External System Label</Label>
               <Input
-                placeholder="e.g. XTREME_SCRAPER_ADMIN_KEY — what this key is called in other systems"
+                placeholder="e.g. X1_BROWSER_ADMIN_KEY — what this key is called in other systems"
                 value={newKey.external_label}
                 onChange={e => setNewKey({ ...newKey, external_label: e.target.value })}
               />

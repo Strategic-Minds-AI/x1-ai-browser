@@ -162,7 +162,7 @@ export default function AutoComplete() {
           <CardHeader><CardTitle className="text-base">Register a System</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div><Label>System Name</Label><Input value={newSys.system_name} onChange={e => setNewSys({ ...newSys, system_name: e.target.value })} placeholder="CloudBrowser" /></div>
-            <div><Label>Canonical Repo</Label><Input value={newSys.canonical_repo} onChange={e => setNewSys({ ...newSys, canonical_repo: e.target.value })} placeholder="XTREME-SYSTEMS/cloudbrowser-control" /></div>
+            <div><Label>Canonical Repo</Label><Input value={newSys.canonical_repo} onChange={e => setNewSys({ ...newSys, canonical_repo: e.target.value })} placeholder="Strategic-Minds-AI/x1-ai-browser" /></div>
             <div><Label>Base44 App ID</Label><Input value={newSys.base44_app_id} onChange={e => setNewSys({ ...newSys, base44_app_id: e.target.value })} /></div>
             <div><Label>Runtime</Label>
               <select className="w-full h-9 rounded-md border border-input bg-transparent px-3 text-sm" value={newSys.runtime} onChange={e => setNewSys({ ...newSys, runtime: e.target.value })}>

@@ -1,5 +1,5 @@
 {
-  "name": "untitled",
+  "name": "x1-ai-browser",
   "site": {
     "installCommand": "npm install",
     "buildCommand": "npm run build",
