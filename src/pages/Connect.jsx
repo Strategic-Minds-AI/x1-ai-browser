@@ -45,7 +45,7 @@ export default function Connect() {
           Connect AI Assistants
         </h1>
         <p className="text-muted-foreground text-sm">
-          Link ChatGPT, Claude, Cursor, or any MCP-compatible AI client to your Xtreme Cloud Browser app.
+          Link ChatGPT, Claude, Cursor, or any MCP-compatible AI client to your X1 AI Browser app.
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function Connect() {
             <p className="font-semibold">Sign-in required</p>
             <p className="text-muted-foreground">
               This app uses OAuth. When you connect, your AI client will open a consent page where you
-              sign in with your Xtreme Cloud Browser account and approve access. The assistant only
+              sign in with your X1 AI Browser account and approve access. The assistant only
               ever acts as you — with your permissions, not more.
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function Connect() {
                 <Step n={1}>Open Claude and click your <strong>profile menu</strong> (bottom-left).</Step>
                 <Step n={2}>Go to <strong>Settings → Connectors</strong>.</Step>
                 <Step n={3}>Click <strong>"Add custom connector"</strong>.</Step>
-                <Step n={4}>Give it a name (e.g. "Xtreme Cloud Browser") and paste the MCP server URL above.</Step>
+                <Step n={4}>Give it a name (e.g. "X1 AI Browser") and paste the MCP server URL above.</Step>
                 <Step n={5}>Click <strong>Add</strong>. Claude will open the consent page — sign in and approve.</Step>
               </ol>
             </CardContent>
@@ -112,7 +112,7 @@ export default function Connect() {
               <ol className="space-y-3">
                 <Step n={1}>In ChatGPT, go to <strong>Apps</strong> and enable <strong>Developer mode</strong> (acknowledge the risk prompt).</Step>
                 <Step n={2}>Click <strong>"Create app"</strong>.</Step>
-                <Step n={3}>Name it (e.g. "Xtreme Cloud Browser") and paste the MCP server URL above.</Step>
+                <Step n={3}>Name it (e.g. "X1 AI Browser") and paste the MCP server URL above.</Step>
                 <Step n={4}>Click <strong>Create</strong>, then enable the app from the chat composer before prompting it.</Step>
                 <Step n={5}>ChatGPT will open the consent page — sign in with your app account and approve.</Step>
               </ol>

@@ -1,14 +1,18 @@
 {
-  "name": "BrowserForge — Browser Automation",
-  "short_name": "BrowserForge",
-  "description": "Self-hosted browser automation platform for managing headless Chrome fleets and automated data extraction.",
+  "name": "X1 AI Browser | Strategic Minds AI",
+  "short_name": "X1 Browser",
+  "description": "Governed browser automation and execution platform for Strategic Minds AI.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#0a0a0a",
-  "categories": ["productivity", "developer", "business"],
+  "categories": [
+    "productivity",
+    "developer",
+    "business"
+  ],
   "icons": [
     {
       "src": "/icon.svg",

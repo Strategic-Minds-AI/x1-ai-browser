@@ -52,9 +52,9 @@ export default function AdminPortal() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src={LOGO_URL} alt="Xtreme Cloud Browser" className="w-9 h-9 shrink-0" fittingType="fit" />
+            <Image src={LOGO_URL} alt="X1 AI Browser" className="w-9 h-9 shrink-0" fittingType="fit" />
             <div>
-              <span className="font-heading font-bold text-lg block leading-tight">Xtreme Cloud Browser</span>
+              <span className="font-heading font-bold text-lg block leading-tight">X1 AI Browser</span>
               <span className="text-xs text-muted-foreground">Admin Portal</span>
             </div>
           </div>

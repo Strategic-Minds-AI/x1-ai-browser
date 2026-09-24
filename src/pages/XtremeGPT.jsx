@@ -185,7 +185,7 @@ export default function XtremeGPT() {
     try {
       const conv = await agentsApi.createConversation({
         agent_name: AGENT_NAME,
-        metadata: { name: `Chat ${conversations.length + 1}`, description: "Xtreme GPT conversation" },
+        metadata: { name: `Chat ${conversations.length + 1}`, description: "X1 GPT conversation" },
       });
       setConversations([conv, ...conversations]);
       setActiveId(conv.id);
