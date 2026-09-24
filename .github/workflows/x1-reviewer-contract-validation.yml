@@ -1,0 +1,49 @@
+name: X1 Reviewer Contract Validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/agents/x1-independent-release-reviewer.agent.md'
+      - '.github/copilot-instructions.md'
+      - '.github/workflows/x1-reviewer-contract-validation.yml'
+  push:
+    branches-ignore: [main]
+    paths:
+      - '.github/agents/x1-independent-release-reviewer.agent.md'
+      - '.github/copilot-instructions.md'
+      - '.github/workflows/x1-reviewer-contract-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-reviewer-contract:
+    name: Validate reviewer is read-only and fail-closed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate X1 independent reviewer contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          AGENT=".github/agents/x1-independent-release-reviewer.agent.md"
+          INSTR=".github/copilot-instructions.md"
+
+          test -f "$AGENT"
+          test -f "$INSTR"
+
+          FRONTMATTER="$(awk 'BEGIN{n=0} /^---[[:space:]]*$/{n++; next} n==1{print} n>=2{exit}' "$AGENT")"
+
+          printf '%s\n' "$FRONTMATTER" | grep -Fx 'name: x1-independent-release-reviewer'
+          printf '%s\n' "$FRONTMATTER" | grep -Fx 'target: github-copilot'
+          printf '%s\n' "$FRONTMATTER" | grep -Fx 'tools: ["read", "search"]'
+          test "$(printf '%s\n' "$FRONTMATTER" | grep -c '^tools:')" -eq 1
+
+          grep -F 'BLOCKED_SELF_INDEPENDENCE' "$AGENT"
+          grep -F 'Never create, edit, delete, commit, push, merge, deploy, or repair implementation.' "$AGENT"
+          grep -F 'Missing, skipped, stale, waived, inaccessible, or wrong-SHA mandatory evidence is not a pass.' "$INSTR"
+          grep -F '.github/agents/**' "$INSTR"
+          grep -F '.github/workflows/**' "$INSTR"
+
+          echo "PASS: X1 independent reviewer remains read-only, self-review blocked, and fail-closed."
