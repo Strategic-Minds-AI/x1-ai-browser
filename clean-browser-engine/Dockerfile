@@ -14,11 +14,9 @@ RUN npm ci --omit=dev --omit=optional
 # Playwright Chromium
 RUN npx playwright install chromium
 
-# @xenova/transformers is ~300MB — install separately, fault-tolerant
-# If it fails, engine still starts (audio captcha path will fail gracefully)
-RUN npm install @xenova/transformers@^2.17.1 --no-save || echo "WARN: @xenova/transformers install failed — audio STT will be unavailable"
-
-# Fail closed if the final production dependency graph contains high/critical advisories.
+# Audio STT is intentionally not installed in the core browser image.
+# stt-whisper.js already fails closed/gracefully when the optional module is unavailable.
+# Keep the release dependency graph locked and auditable.
 RUN npm audit --omit=dev --audit-level=high
 
 # Copy all engine source files
