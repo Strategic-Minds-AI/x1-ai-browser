@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const source = (await readFile(new URL("../base44/shared/engineClient.ts", import.meta.url), "utf8"))
-  .replace('import { secrets } from "base44:runtime";', 'const secrets = globalThis.__testSecrets;');
+  .replace('import { secrets } from "base44:runtime";', 'const secrets = { get:(name)=>globalThis.__testSecrets.get(name) };');
 const client = await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
 const urls = ["https://engine-a.invalid", "https://engine-b.invalid", "https://engine-c.invalid"];
 const owner = "worker-b";
