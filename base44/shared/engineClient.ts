@@ -90,8 +90,32 @@ export async function engineFetch(path, options = {}, requestId) {
   };
   if (requestId) baseHeaders["x-request-id"] = requestId;
 
+  // Session state lives in one engine's process. Failover is safe for creating
+  // sessions but never for continuing an already-owned session.
+  const sessionMatch = path.match(/^\/sessions\/([^/]+)(?:\/|$)/);
+  let candidates = urls;
+  if (sessionMatch && _base44) {
+    const runtimeId = decodeURIComponent(sessionMatch[1]);
+    const records = await _base44.asServiceRole.entities.Session.filter({ session_id: runtimeId });
+    const ownerWorkerId = records?.[0]?.metadata?.worker_id;
+    if (!ownerWorkerId) throw new Error("SESSION_OWNER_UNVERIFIED");
+    const matches = [];
+    for (const baseUrl of urls) {
+      try {
+        const health = await fetch(`${baseUrl}/health`, {
+          headers: { "x-api-key": key },
+        });
+        if (!health.ok) continue;
+        const body = await health.json();
+        if ((body.worker_id || body.workerId) === ownerWorkerId) matches.push(baseUrl);
+      } catch { /* Unreachable engine cannot own a usable session. */ }
+    }
+    if (matches.length !== 1) throw new Error("SESSION_OWNER_ENGINE_UNAVAILABLE");
+    candidates = matches;
+  }
+
   const errors = [];
-  for (const baseUrl of urls) {
+  for (const baseUrl of candidates) {
     try {
       const res = await fetch(`${baseUrl}${path}`, {
         ...options,
