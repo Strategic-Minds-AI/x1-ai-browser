@@ -6,7 +6,9 @@ import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/cli
 const PORT = Number(process.env.PORT || 3000);
 const gatewayBase = String(process.env.GATEWAY_URL || "").replace(/\/$/,"");
 const mcpKey = String(process.env.CLOUD_BROWSER_MCP_KEY || "");
-const targetUrl = "https://example.com/";
+const FIXTURE_MARKER = "STRATEGIC_MINDS_BROWSER_STAGING_CANARY_20261014";
+const targetUrl = "https://cloud-browser-validator-staging-staging.up.railway.app/fixture";
+const fixtureHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Cloud Browser Staging Fixture</title></head><body><main><h1>${FIXTURE_MARKER}</h1><p>Isolated browser validation; no user content.</p></main></body></html>`;
 
 if (!gatewayBase) throw new Error("GATEWAY_URL_REQUIRED");
 if (mcpKey.length < 24) throw new Error("CLOUD_BROWSER_MCP_KEY_REQUIRED");
@@ -79,26 +81,45 @@ async function runValidation() {
 
     report.checks.session_start = "PASS";
 
-    const navigated = await modern.callTool({
-      name:"browser_navigate",
-      arguments:{session_id:sessionId,url:targetUrl,wait_until:"domcontentloaded",timeout_ms:30000}
-    });
-    assert.notEqual(navigated.isError,true);
-    report.checks.navigate = "PASS";
+    // During deployment cutover the public fixture domain may briefly route to
+    // the prior validator instance. Retry ONLY this staging fixture and fail
+    // closed if the exact origin, path and marker never agree.
+    let observation = null;
+    let fixtureAttempt = 0;
+    for (let attempt = 1; attempt <= 8; attempt++) {
+      fixtureAttempt = attempt;
+      const navigated = await modern.callTool({
+        name:"browser_navigate",
+        arguments:{session_id:sessionId,url:targetUrl,wait_until:"domcontentloaded",timeout_ms:30000}
+      });
+      assert.notEqual(navigated.isError,true);
+      report.checks.navigate = "PASS";
 
-    const observed = await modern.callTool({
-      name:"browser_observe",
-      arguments:{session_id:sessionId,max_chars:5000}
-    });
-    assert.notEqual(observed.isError,true);
-    const observation = value(observed);
-    assert.match(String(observation.url || ""),/example\.com/);
-    assert.match(String(observation.text || ""),/Example Domain/i);
+      const observed = await modern.callTool({
+        name:"browser_observe",
+        arguments:{session_id:sessionId,max_chars:5000}
+      });
+      assert.notEqual(observed.isError,true);
+      observation = value(observed);
+      const text = String(observation.text || "");
+      let atFixture = false;
+      try {
+        const location = new URL(String(observation.url || ""));
+        atFixture = location.origin === new URL(targetUrl).origin && location.pathname === "/fixture";
+      } catch (_) { atFixture = false; }
+      if (atFixture && text.includes(FIXTURE_MARKER)) break;
+      if (attempt < 8) await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+    report.fixture_attempts = fixtureAttempt;
+    assert.ok(observation, "No staging fixture observation returned");
+    assert.equal(new URL(String(observation.url || "")).origin, new URL(targetUrl).origin);
+    assert.equal(new URL(String(observation.url || "")).pathname, "/fixture");
+    assert.ok(String(observation.text || "").includes(FIXTURE_MARKER), "Isolated staging fixture marker missing after bounded retries");
     report.checks.observe = "PASS";
     report.observation = {
       url:observation.url || null,
       title:observation.title || null,
-      text_contains_example_domain:/Example Domain/i.test(String(observation.text || ""))
+      fixture_marker_seen:String(observation.text || "").includes(FIXTURE_MARKER)
     };
 
     const shot = await modern.callTool({
@@ -110,6 +131,7 @@ async function runValidation() {
     assert.ok(image?.data);
     screenshot = Buffer.from(image.data,"base64");
     assert.ok(screenshot.length > 1000);
+    assert.equal(screenshot.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
     report.checks.screenshot = "PASS";
     report.screenshot = {
       mime_type:image.mimeType || "image/png",
@@ -153,6 +175,10 @@ async function runValidation() {
 }
 
 createServer((req,res)=>{
+  if (req.method === "GET" && req.url === "/fixture") {
+    res.writeHead(200,{"content-type":"text/html; charset=utf-8","cache-control":"no-store","x-robots-tag":"noindex, nofollow","x-content-type-options":"nosniff"});
+    return res.end(fixtureHtml);
+  }
   if (req.url === "/healthz") {
     res.writeHead(200,{"content-type":"application/json","cache-control":"no-store"});
     return res.end(JSON.stringify({ok:true,validator_status:report.status}));
