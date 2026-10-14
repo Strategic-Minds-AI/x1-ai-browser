@@ -105,7 +105,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
         status: "idle",
         project_id: keyRecord.project_id,
         started_at: new Date().toISOString(),
-        metadata: { worker_id: engineRes.workerId, region: engineRes.region, captcha_solver_enabled: !!captchaSolver },
+        metadata: { worker_id: engineRes.workerId, region: engineRes.region, engine_origin: engineRes._engine_origin, captcha_solver_enabled: !!captchaSolver },
       });
       return { session_id: session.id, runtime_session_id: engineRes.sessionId, status: "idle", captcha_solver_enabled: !!captchaSolver };
     }
@@ -115,7 +115,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!session) throw new Error("Session not found");
       if (keyRecord.project_id && session.project_id !== keyRecord.project_id) throw new Error("Session not found");
       if (session.session_id && await isEngineConfigured()) {
-        try { await engineDelete(`/sessions/${session.session_id}`); } catch (e) {}
+        try { await engineDelete(`/sessions/${session.session_id}`, undefined, session.metadata?.engine_origin); } catch (e) {}
       }
       await base44.asServiceRole.entities.Session.update(params.session_id, {
         status: "ended", ended_at: new Date().toISOString(),
@@ -131,7 +131,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "goto", value: params.url,
         options: { waitUntil: params.wait_until || "domcontentloaded", timeout: params.timeout || 60000 },
-      });
+      }, undefined, session.metadata?.engine_origin);
       await base44.asServiceRole.entities.Session.update(params.session_id, {
         current_url: res.url, current_title: res.title,
       });
@@ -153,7 +153,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
         selector: params.selector,
         value: params.value,
         options: actionOptions,
-      });
+      }, undefined, session.metadata?.engine_origin);
       return { result: res };
     }
 
@@ -165,7 +165,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "evaluate",
         options: { fn: params.fn || "() => ({ url: location.href, title: document.title })" },
-      });
+      }, undefined, session.metadata?.engine_origin);
       return { observation: res.data };
     }
 
@@ -177,7 +177,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const extractType = params.extract_type || "extract_text";
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: extractType, selector: params.selector,
-      });
+      }, undefined, session.metadata?.engine_origin);
       return { data: res.data };
     }
 
@@ -188,7 +188,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "screenshot", options: { fullPage: params.full_page || false },
-      });
+      }, undefined, session.metadata?.engine_origin);
       // Upload and create artifact
       if (res.base64) {
         const file = new File([Uint8Array.from(atob(res.base64), (c) => c.charCodeAt(0))], `mcp_screenshot.png`, { type: "image/png" });
@@ -212,7 +212,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       if (!await isEngineConfigured()) throw new Error("Engine not configured");
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "switch_tab", value: String(params.tab_index),
-      });
+      }, undefined, session.metadata?.engine_origin);
       return { url: res.url };
     }
 
@@ -231,7 +231,7 @@ async function handleTool(base44, tool, params, keyRecord, requestId) {
       const res = await enginePost(`/sessions/${session.session_id}/execute`, {
         action_type: "solve_captcha",
         options: solveOptions,
-      });
+      }, undefined, session.metadata?.engine_origin);
       return { result: res.data, captcha: res.data };
     }
 
