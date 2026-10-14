@@ -75,6 +75,18 @@ jobs:
         working-directory: browser-engine
         run: node --check server.js
 
+  session-affinity:
+    name: Session Affinity Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Test pinned-origin fail-closed routing
+        run: node scripts/session-affinity-regression.mjs
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -124,6 +136,6 @@ jobs:
   release-status:
     name: Release Gate Status
     runs-on: ubuntu-latest
-    needs: [code-quality, engine-syntax, security-audit]
+    needs: [code-quality, engine-syntax, security-audit, session-affinity]
     steps:
-      - run: echo "All required gates passed — release candidate verified"
+      - run: echo "Source CI checks passed; staging session continuity and independent Guardian validation remain separate release gates"
