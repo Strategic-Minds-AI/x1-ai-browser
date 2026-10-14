@@ -81,22 +81,40 @@ async function runValidation() {
 
     report.checks.session_start = "PASS";
 
-    const navigated = await modern.callTool({
-      name:"browser_navigate",
-      arguments:{session_id:sessionId,url:targetUrl,wait_until:"domcontentloaded",timeout_ms:30000}
-    });
-    assert.notEqual(navigated.isError,true);
-    report.checks.navigate = "PASS";
+    // During deployment cutover the public fixture domain may briefly route to
+    // the prior validator instance. Retry ONLY this staging fixture and fail
+    // closed if the exact origin, path and marker never agree.
+    let observation = null;
+    let fixtureAttempt = 0;
+    for (let attempt = 1; attempt <= 8; attempt++) {
+      fixtureAttempt = attempt;
+      const navigated = await modern.callTool({
+        name:"browser_navigate",
+        arguments:{session_id:sessionId,url:targetUrl,wait_until:"domcontentloaded",timeout_ms:30000}
+      });
+      assert.notEqual(navigated.isError,true);
+      report.checks.navigate = "PASS";
 
-    const observed = await modern.callTool({
-      name:"browser_observe",
-      arguments:{session_id:sessionId,max_chars:5000}
-    });
-    assert.notEqual(observed.isError,true);
-    const observation = value(observed);
+      const observed = await modern.callTool({
+        name:"browser_observe",
+        arguments:{session_id:sessionId,max_chars:5000}
+      });
+      assert.notEqual(observed.isError,true);
+      observation = value(observed);
+      const text = String(observation.text || "");
+      let atFixture = false;
+      try {
+        const location = new URL(String(observation.url || ""));
+        atFixture = location.origin === new URL(targetUrl).origin && location.pathname === "/fixture";
+      } catch (_) { atFixture = false; }
+      if (atFixture && text.includes(FIXTURE_MARKER)) break;
+      if (attempt < 8) await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+    report.fixture_attempts = fixtureAttempt;
+    assert.ok(observation, "No staging fixture observation returned");
     assert.equal(new URL(String(observation.url || "")).origin, new URL(targetUrl).origin);
     assert.equal(new URL(String(observation.url || "")).pathname, "/fixture");
-    assert.ok(String(observation.text || "").includes(FIXTURE_MARKER), "Isolated staging fixture marker missing");
+    assert.ok(String(observation.text || "").includes(FIXTURE_MARKER), "Isolated staging fixture marker missing after bounded retries");
     report.checks.observe = "PASS";
     report.observation = {
       url:observation.url || null,
