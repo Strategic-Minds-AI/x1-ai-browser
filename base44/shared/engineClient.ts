@@ -81,7 +81,7 @@ export async function getEngineKeyFingerprint() {
 // Generic authenticated fetch with multi-engine failover.
 // Tries each candidate URL in order; on network error or 5xx, falls through to the next.
 // L4 fix: forward x-request-id for trace propagation when provided
-export async function engineFetch(path, options = {}, requestId) {
+export async function engineFetch(path, options = {}, requestId, preferredEngineUrl = null) {
   const { urls, key } = await getEngineConfig();
   const baseHeaders = {
     "Content-Type": "application/json",
@@ -90,8 +90,17 @@ export async function engineFetch(path, options = {}, requestId) {
   };
   if (requestId) baseHeaders["x-request-id"] = requestId;
 
+  // A browser session lives on the engine that created it. A pinned request
+  // never falls through to a different engine, including on 5xx, because
+  // session state cannot be assumed to exist there. Validate persisted
+  // origins against the currently configured engines to prevent SSRF.
+  const preferred = preferredEngineUrl ? String(preferredEngineUrl).replace(/\/+$/, "") : null;
+  if (preferred && !urls.includes(preferred)) {
+    throw new Error("Session origin is not a configured browser engine");
+  }
+  const candidates = preferred ? [preferred] : urls;
   const errors = [];
-  for (const baseUrl of urls) {
+  for (const baseUrl of candidates) {
     try {
       const res = await fetch(`${baseUrl}${path}`, {
         ...options,
@@ -118,6 +127,11 @@ export async function engineFetch(path, options = {}, requestId) {
         continue;
       }
 
+      // Internal metadata only. Persist on the Base44 Session entity to
+      // keep all subsequent commands on this exact engine.
+      if (path === "/sessions" && options.method === "POST" && body && typeof body === "object" && !Array.isArray(body)) {
+        return { ...body, _engine_origin: baseUrl };
+      }
       return body;
     } catch (err) {
       // Network error / fetch rejection — record and try next engine
@@ -128,14 +142,14 @@ export async function engineFetch(path, options = {}, requestId) {
   throw new Error(`All engines failed. Attempts: ${errors.join(" | ")}`);
 }
 
-export async function enginePost(path, payload, requestId) {
-  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId);
+export async function enginePost(path, payload, requestId, preferredEngineUrl = null) {
+  return engineFetch(path, { method: "POST", body: JSON.stringify(payload || {}) }, requestId, preferredEngineUrl);
 }
 
-export async function engineDelete(path, requestId) {
-  return engineFetch(path, { method: "DELETE" }, requestId);
+export async function engineDelete(path, requestId, preferredEngineUrl = null) {
+  return engineFetch(path, { method: "DELETE" }, requestId, preferredEngineUrl);
 }
 
-export async function engineGet(path, requestId) {
-  return engineFetch(path, { method: "GET" }, requestId);
+export async function engineGet(path, requestId, preferredEngineUrl = null) {
+  return engineFetch(path, { method: "GET" }, requestId, preferredEngineUrl);
 }
